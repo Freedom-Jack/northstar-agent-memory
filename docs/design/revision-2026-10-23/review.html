@@ -1,0 +1,602 @@
+<title>Northstar three-job design</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: one reading column. A three-line summary, the system picture, what changed with your answers and your one next step; everything else in collapsed cards. */
+:root{
+  --bg:#F5F6F9; --surface:#FFFFFF; --ink:#18202D; --muted:#566172; --line:#D9DFE8; --line-strong:#B9C2CF;
+  --accent:#2446A0; --accent-soft:#E5EBF8;
+  --focus:#9C5410; --focus-soft:#FAEEDF;
+  --memory:#0F6B66; --memory-soft:#DDF1EE;
+  --maint:#56479A; --maint-soft:#ECE8F8;
+  --warn:#9A3B1E; --warn-soft:#FBE9E2; --ok:#2B6A39;
+  --font-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --font-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Menlo,monospace;
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F131A; --surface:#161C26; --ink:#E5E9F0; --muted:#9BA6B6; --line:#283140; --line-strong:#3A4557;
+    --accent:#93ACF2; --accent-soft:#1C2640;
+    --focus:#EBA563; --focus-soft:#2C2114;
+    --memory:#5FC7BE; --memory-soft:#112927;
+    --maint:#B2A6EE; --maint-soft:#211D37;
+    --warn:#F1A083; --warn-soft:#2E1B15; --ok:#80C88E;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F131A; --surface:#161C26; --ink:#E5E9F0; --muted:#9BA6B6; --line:#283140; --line-strong:#3A4557;
+  --accent:#93ACF2; --accent-soft:#1C2640;
+  --focus:#EBA563; --focus-soft:#2C2114;
+  --memory:#5FC7BE; --memory-soft:#112927;
+  --maint:#B2A6EE; --maint-soft:#211D37;
+  --warn:#F1A083; --warn-soft:#2E1B15; --ok:#80C88E;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.6 var(--font-body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:48rem;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:36px}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2rem,1.4rem + 2.6vw,2.9rem);font-weight:700;letter-spacing:-.01em}
+h2{font-size:1.6rem;font-weight:700}
+h3{font-size:1.1rem;font-weight:700}
+p{margin:0}
+ul,ol{margin:0;padding-left:1.25rem;display:flex;flex-direction:column;gap:6px}
+a{color:var(--accent);text-underline-offset:3px}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+strong{font-weight:600}
+.eyebrow{font:500 .74rem/1.2 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.small{font-size:.9rem}
+.tag{font:500 .74rem/1 var(--font-mono);letter-spacing:.02em;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 8px;white-space:nowrap}
+section{display:flex;flex-direction:column;gap:16px}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+code.nw{white-space:nowrap}
+header{display:flex;flex-direction:column;gap:14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.status{display:flex;flex-wrap:wrap;gap:8px}
+.summary{display:flex;flex-direction:column;gap:8px;padding-left:1.1rem;font-size:1.02rem}
+.summary li::marker{color:var(--accent)}
+
+/* Questions */
+form{display:flex;flex-direction:column;gap:22px}
+fieldset{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:16px;margin:0;display:flex;flex-direction:column;gap:12px;min-width:0}
+legend{font:700 1.1rem/1.3 var(--font-display);padding:0 6px}
+.qpoints{display:flex;flex-direction:column;gap:6px;padding-left:1.1rem;font-size:.95rem}
+.next{border:1.5px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.next h3{font-size:1.05rem}
+.rule{border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);background:var(--accent-soft);border-radius:8px;padding:9px 12px;font-size:.92rem}
+.exception{border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);background:var(--warn-soft);border-radius:8px;padding:9px 12px;font-size:.92rem}
+.examples{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.example{border-radius:8px;padding:10px 12px;background:var(--focus-soft);font-size:.88rem;display:flex;flex-direction:column;gap:6px;min-width:0}
+.example b{font-weight:600}
+.example .said{font-style:italic;border-left:3px solid var(--focus);padding-left:8px}
+@media (max-width:620px){.examples{grid-template-columns:1fr}}
+.choices{display:grid;gap:8px}
+.choice{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:var(--surface)}
+.choice:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.choice input{margin-top:5px;accent-color:var(--accent);flex:none}
+.choice span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.choice small{color:var(--muted);font-size:.86rem;line-height:1.45}
+label.field{display:flex;flex-direction:column;gap:6px;font-size:.9rem;color:var(--muted)}
+textarea{width:100%;min-height:70px;font:inherit;font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;resize:vertical}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font:600 .95rem/1 var(--font-body);border-radius:8px;padding:11px 16px;cursor:pointer;border:1px solid var(--accent)}
+button.primary{background:var(--accent);color:var(--surface)}
+button.secondary{background:transparent;color:var(--accent)}
+.savestatus{font-size:.9rem;color:var(--muted)}
+.savestatus.ok{color:var(--ok)}
+.savestatus.err{color:var(--warn)}
+#copyFallback{width:100%;min-height:120px;font:400 .82rem/1.4 var(--font-mono)}
+
+/* Architecture picture */
+.arch{display:grid;gap:8px}
+.lane{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:stretch}
+.lane .arrow{align-self:center;color:var(--muted)}
+.box{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg);display:flex;flex-direction:column;gap:2px;min-width:0}
+.box b{font-family:var(--font-display);font-size:.95rem}
+.box span{font-size:.8rem;line-height:1.4;color:var(--muted)}
+.box.raw{border-color:var(--line-strong)}
+.box.dream{background:var(--maint-soft);border-color:color-mix(in srgb,var(--maint) 35%,transparent)} .box.dream b{color:var(--maint)}
+.box.know{border:1.5px solid var(--ink)}
+.box.wm{background:var(--focus-soft);border-color:color-mix(in srgb,var(--focus) 35%,transparent)} .box.wm b{color:var(--focus)}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.box.ai{background:var(--memory-soft);border-color:color-mix(in srgb,var(--memory) 35%,transparent)} .box.ai b{color:var(--memory)}
+.box.hu{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,transparent)} .box.hu b{color:var(--accent)}
+@media (max-width:600px){
+  .lane{grid-template-columns:1fr}
+  .lane .arrow{justify-self:center;transform:rotate(90deg)}
+  .two{grid-template-columns:1fr}
+}
+
+/* Tables */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;line-height:1.45}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+thead th{font-weight:600;background:var(--bg)}
+tr:last-child td{border-bottom:0}
+.wide table{min-width:620px}
+td.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+table.compare td:first-child{color:var(--muted);width:42%}
+
+/* Detail cards */
+.cards{display:flex;flex-direction:column;gap:10px}
+details.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);border-left:4px solid var(--c,var(--line-strong))}
+details.card.f{--c:var(--focus)} details.card.m{--c:var(--memory)} details.card.t{--c:var(--maint)} details.card.h{--c:var(--accent)} details.card.a{--c:var(--ink)}
+details.card>summary{cursor:pointer;list-style:none;padding:12px 14px;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:start}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary::before{content:"";grid-row:1 / span 2;margin-top:8px;width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s ease}
+details.card[open]>summary::before{transform:rotate(45deg)}
+details.card>summary b{font:700 1.04rem/1.3 var(--font-display)}
+details.card>summary span{font-size:.9rem;color:var(--muted);grid-column:2}
+details.card>.body{padding:0 16px 16px 32px;display:flex;flex-direction:column;gap:12px;min-width:0}
+details.card h4{margin:4px 0 0;font:600 .95rem/1.3 var(--font-body)}
+.src{font:500 .72rem/1.3 var(--font-mono);color:var(--muted)}
+details.note>summary{cursor:pointer;font-size:.88rem;color:var(--muted)}
+details.note textarea{margin-top:8px}
+@media (max-width:520px){details.card>.body{padding:0 12px 14px 14px}}
+
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.86rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Northstar · revised after your round-3 answers of 25 Oct</span>
+  <h1>Northstar three-job design</h1>
+  <ul class="summary">
+    <li><strong>A memory and focus layer for the AI you already use.</strong> Like ChatGPT's Dreaming memory system, it builds memory in the background. Unlike it, it works across all your AIs, keeps memory structures for the AI and for you, and helps you stay focused.</li>
+    <li><strong>Not an AI of its own:</strong> your own Claude and ChatGPT models do the thinking, through the vendors' APIs where it runs in the background. That also keeps a commercial path open, as you noted.</li>
+    <li><strong>One step for you next:</strong> drop a few chats into your probe inbox, and the overview sketch round can start.</li>
+  </ul>
+  <div class="status">
+    <span class="tag">25 Oct 2026</span>
+    <span class="tag">Version 3.2</span>
+    <span class="tag">Nothing built</span>
+    <span class="tag">Your answers recorded in GOAL.md</span>
+  </div>
+</header>
+
+<!-- ========== SYSTEM, CHANGES, NEXT STEP ========== -->
+<section id="answers" aria-labelledby="answers-h">
+  <span class="eyebrow">Where things stand</span>
+  <h2 id="answers-h">What your answers changed</h2>
+
+  <div class="arch" role="img" aria-label="Your chats from all your AI apps are kept as chat history. Maintenance runs in the background and builds your memory. From memory come what the AI gets in new chats, and your overview. During long sessions, focus offers one step toward your goal.">
+    <div class="lane">
+      <div class="box raw"><b>Chat history</b><span>Your chats from all your AI apps, both sides where the app allows, word for word. Never edited.</span></div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="box dream"><b>Maintenance</b><span>In the background, after a chat goes idle and each night: extract, merge, check, refresh, log.</span></div>
+      <span class="arrow" aria-hidden="true">→</span>
+      <div class="box know"><b>Memory</b><span>Your ideas and the AI ideas you adopted, one line each, each citing the chat it came from.</span></div>
+    </div>
+    <div class="two">
+      <div class="box ai"><b>For the AI</b><span>A start note when you resume a piece of work; otherwise only plain facts it lacks, often nothing. Your views when it asks.</span></div>
+      <div class="box hu"><b>For you</b><span>Your overview: a map of your ideas with your work under each, inside Claude when you ask.</span></div>
+    </div>
+    <div class="box wm"><b>Focus, during long sessions</b><span>At a few moments your AI offers one step toward your goal.</span></div>
+  </div>
+
+  <ul class="qpoints">
+    <li><strong>Q9, "in a sense like" Dreaming, not literally.</strong> The design now opens with what Northstar is: memory structures for the AI and for you, help with focus and memory, working with Claude and ChatGPT rather than on its own. The part-by-part comparison with ChatGPT stays as a reference card. The background process is now called <em>maintenance</em>, your word for job 3, since "Dreaming" is OpenAI's name.</li>
+    <li><strong>Q10, left to us.</strong> Background work goes through the vendors' APIs, on the same Claude and ChatGPT models. A product can build on that route; plan logins in third-party products need Anthropic's approval. It also leaves your chat allowance alone. For now that means your own API keys, or your plan's API credits if it has them.</li>
+    <li><strong>Q11, yes.</strong> Claude and ChatGPT check each other's work, using only the excerpts a check needs.</li>
+    <li><strong>Q12, your website work plus chats you add.</strong> The sketch round waits for those chats.</li>
+    <li><strong>Q13, not sure yet.</strong> Until you decide, the phone comes after the four first connectors.</li>
+  </ul>
+
+  <div class="next">
+    <h3>Your next step: a few chats for the sketch round</h3>
+    <ul class="small">
+      <li>Drop three to six chats on topics other than Northstar into <code class="nw">~/northstar-probe/inbox/</code>. Topics you came back to over time work best.</li>
+      <li>Any of these formats: a ChatGPT or Claude export file, or pasted text with <code class="nw">Me:</code> and <code class="nw">AI:</code> before each turn.</li>
+      <li>Then tell the chat they are there. Nothing from them is published; the sketches stay on this Mac.</li>
+    </ul>
+  </div>
+
+  <form id="answerForm" novalidate>
+    <label class="field" for="note-next">Anything to add, for example about the new name or the route (optional)
+      <textarea id="note-next"></textarea>
+    </label>
+    <div class="actions">
+      <button type="submit" class="primary">Save my note</button>
+      <button type="button" class="secondary" data-copy>Copy my note</button>
+      <span class="savestatus" role="status" aria-live="polite"></span>
+    </div>
+    <textarea id="copyFallback" readonly hidden aria-label="Your note as text"></textarea>
+  </form>
+</section>
+
+<!-- ========== DETAIL ========== -->
+<section id="detail" aria-labelledby="detail-h">
+  <span class="eyebrow">Detail on demand</span>
+  <h2 id="detail-h">Open what you want to check</h2>
+  <div class="cards">
+
+    <details class="card a" id="card-runs">
+      <summary><b>Where the thinking runs</b><span>Each job, how it runs, and the four things that still run apart</span></summary>
+      <div class="body">
+        <div class="tablewrap wide"><table>
+          <thead><tr><th>Job</th><th>How it runs</th><th>On which AI</th></tr></thead>
+          <tbody>
+            <tr><td>Focus's thinking at a moment</td><td>Your assistant, in its own reply, from a note Northstar prepares ahead</td><td>The assistant you are talking to</td></tr>
+            <tr><td>Focus's blind version check</td><td>A hidden sub-task, prepared ahead: nightly for a new-day moment, right after the turn that crossed half the window otherwise</td><td>Your assistant's family, in a fresh context</td></tr>
+            <tr><td>Keeping working memory current</td><td>A hidden sub-task on a small model after each of your turns, noting decisions and ruled-out options</td><td>Your assistant's family</td></tr>
+            <tr><td>Memory in a new chat</td><td>Code ranks candidates; a small model keeps only strong links, within 3 seconds. If it would take longer, code alone decides. Your first reply can wait up to about 3 seconds</td><td>Your assistant's family</td></tr>
+            <tr><td>What your assistant asks for</td><td>Your assistant calls Northstar's recall tool</td><td>Your assistant itself</td></tr>
+            <tr><td>Maintenance</td><td>Hidden sub-tasks started by a scheduled job, after idle sessions and nightly</td><td>Each session's own family: Claude for Claude's apps, ChatGPT's models for ChatGPT and Codex</td></tr>
+            <tr><td>Maintenance checks</td><td>Hidden sub-tasks</td><td>The other family, as you allowed</td></tr>
+            <tr><td>Search</td><td>A small model on this Mac that finds candidates and judges nothing</td><td>Not an AI call</td></tr>
+          </tbody>
+        </table></div>
+        <p class="small">Hidden sub-tasks go through the vendors' APIs. It is the route a product can build on (plan logins in third-party products need Anthropic's approval), it leaves your chat allowance alone, and the plan-login scripting route may close.</p>
+        <h4>The four things that still run apart, and why</h4>
+        <ol class="small">
+          <li><strong>The blind version check, in a fresh context of the same AI.</strong> The conversation holds the versions, their order and your praise, so it cannot judge blind; judges favour versions labelled "new" and the one users like. The tests compare it with your assistant checking in its own reply, and the simpler one wins a tie.</li>
+          <li><strong>Maintenance checks, by the other family.</strong> Similar models make similar errors, and a check never runs on the family that did the work or said the claim. You allowed the excerpts this needs.</li>
+          <li><strong>A trigger for maintenance.</strong> Claude's own scheduled tasks (while the Claude app is open, or at its next launch) or the Mac's scheduler. It starts your AI; it is not an AI.</li>
+          <li><strong>A small search model on this Mac.</strong> It finds related items said in other words; it writes and judges nothing. Keyword search alone is the alternative.</li>
+        </ol>
+        <p class="small">The chat apps have no hooks, so there focus works only when you ask. Northstar's own runs are never captured as your sessions.</p>
+        <span class="src">DESIGN.md §1.4; research note 22; SPINE §8.2–§8.3</span>
+      </div>
+    </details>
+
+    <details class="card a" id="card-reference">
+      <summary><b>The reference: ChatGPT's Dreaming memory system</b><span>What OpenAI publishes, and how Northstar relates</span></summary>
+      <div class="body">
+        <div class="tablewrap"><table class="compare">
+          <thead><tr><th>In ChatGPT</th><th>In Northstar</th></tr></thead>
+          <tbody>
+            <tr><td>Chat history, referenced when relevant</td><td>Chat history from all your AI apps, searched when needed</td></tr>
+            <tr><td>Saved memories: separate notes, written during a chat</td><td>Memory items, written only by maintenance, each citing the chat turns it came from</td></tr>
+            <tr><td>Dreaming: a background process that synthesizes a memory state and keeps it current. OpenAI does not describe its stages, checks or undo</td><td>Maintenance: a background process that keeps separate items current, checked by the other model family, logged and undoable. Re-dating time-bound facts is borrowed from ChatGPT</td></tr>
+            <tr><td>New chats "start from shared context"</td><td>A start note when you resume work; otherwise strict plain facts</td></tr>
+            <tr><td>A memory summary page</td><td>Your overview, about your ideas and work rather than facts about you</td></tr>
+            <tr><td>Sources under some replies</td><td>Sources in your overview; replies don't mention memory, as you asked on 15 Oct</td></tr>
+            <tr><td>Project-only memory; temporary chats</td><td>Project scope by default; accounts and folders you have not marked are not captured</td></tr>
+            <tr><td>—</td><td>Focus during long sessions</td></tr>
+          </tbody>
+        </table></div>
+        <p class="small muted">From OpenAI's Dreaming post and memory help page, read on 24 Oct. OpenAI's internal tests show carrying context forward rising from 41.5% to 82.8%; the measures are not defined and cannot be reproduced.</p>
+        <span class="src">DESIGN.md §1.5; research note 23</span>
+      </div>
+    </details>
+
+    <details class="card f" id="card-focus">
+      <summary><b>Focus, in full</b><span>As you confirmed: the moments, what your assistant works out, and what you hear</span></summary>
+      <div class="body">
+        <h4>Each moment, replayed on your two marked sessions</h4>
+        <div class="tablewrap wide"><table>
+          <thead><tr><th>Moment</th><th>Your marks it hit (of 13)</th><th>False alarms</th><th>In the design</th></tr></thead>
+          <tbody>
+            <tr><td>You come back on a new day</td><td class="num">5</td><td class="num">1</td><td>On</td></tr>
+            <tr><td>The chat passes half its length limit</td><td class="num">1</td><td class="num">1</td><td>On</td></tr>
+            <tr><td>You ask</td><td>Any</td><td>None</td><td>On</td></tr>
+            <tr><td>The chat passes two thirds of its limit</td><td class="num">0</td><td class="num">2</td><td>Off</td></tr>
+            <tr><td>A phase closes: a commit</td><td class="num">0</td><td class="num">1–2</td><td>Off; a setting to test</td></tr>
+            <tr><td>A phase closes: "looks good"-style words</td><td class="num">1</td><td class="num">1</td><td>Off</td></tr>
+          </tbody>
+        </table></div>
+        <p class="small">Together the three defaults would have spoken at 6 of your 13 moments, with 2 false alarms. That is in-sample: the same marks chose the defaults, so expect fewer on new sessions. Both sessions were picked because they drifted.</p>
+        <h4>What your assistant works out, in its own reply</h4>
+        <ol class="small">
+          <li><strong>Goal, needs, gap:</strong> what the goal needs and what the recent work has not covered, from a note with your goal in your words and where things stand.</li>
+          <li><strong>The quality check</strong> (your pick), where versions exist: the one part done apart, by a hidden sub-task that compares the current version with your best one blind, in both orders, with several screenshots, and says "can't tell" unless both orders agree. It is calibrated on about 10 pairs of your versions first.</li>
+          <li><strong>One suggestion:</strong> step back with a short plan, split off a side topic, or prepare a fresh session with the goal and best version.</li>
+          <li><strong>Or nothing,</strong> the default.</li>
+        </ol>
+        <h4>What you hear</h4>
+        <p class="small">The AI answers your message first, then offers the step in at most two sentences, and acts only on your yes. This one-reply note is the one exception to "memory is plain facts with no rules". It stays in the chat's hidden history, so it says "this reply only", and the tests check the next replies don't keep acting on it.</p>
+        <div class="examples">
+          <div class="example">
+            <b>Next day, interview prep</b>
+            <span>You come back and ask another practice question. The AI answers it, then adds:</span>
+            <span class="said">"Your goal is the interview itself. We've done 14 practice questions, but no timed mock answer or story from your own build. Want to switch to a mock round now, or keep practising?"</span>
+            <span>You say yes: it starts a 10-minute mock round and scores your answer on four points.</span>
+          </div>
+          <div class="example">
+            <b>Same day, one long chat</b>
+            <span>Nothing happens until the chat passes half its length limit, unless you type <code>/northstar step back</code>. Then you get the same kind of offer.</span>
+            <span>This is the weak case: an hour of drifting within one day goes unflagged unless you ask.</span>
+          </div>
+        </div>
+        <span class="src">DESIGN.md §3; research notes 21 and 24; EXPLORATION §2</span>
+      </div>
+    </details>
+
+    <details class="card a" id="card-layers">
+      <summary><b>The memory structures in full</b><span>What sits underneath, and what each part holds</span></summary>
+      <div class="body">
+        <div class="tablewrap wide"><table>
+          <thead><tr><th>Part</th><th>Holds</th><th>Written</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Chat history</strong></td><td>Every captured turn, both sides where the app allows, and every work event, word for word. Never edited</td><td>At once, by capture</td></tr>
+            <tr><td><strong>Memory items</strong></td><td>Your ideas and the AI ideas you adopted, one clear line each, with why, scope, origin and the chat turns behind it</td><td>Only by maintenance, through one write gate</td></tr>
+            <tr><td><strong>Working memory</strong></td><td>For each piece of work in progress: goal, decisions, ruled-out options, versions with your feedback, best version, side topics</td><td>Live: code for versions and feedback, a small model for decisions</td></tr>
+            <tr><td><strong>Working style</strong></td><td>A few lines on how you like AIs to work with you, kept where learned</td><td>Only by maintenance; given to the AI only when it asks</td></tr>
+            <tr><td><strong>Your work</strong></td><td>Pointers to anything you got your hands on, with a small snapshot</td><td>Capture, then maintenance</td></tr>
+            <tr><td><strong>For the AI</strong></td><td>One plain dated line per memory item, with scope and links; a start note for each piece of work in progress</td><td>Rebuilt by maintenance</td></tr>
+            <tr><td><strong>For you</strong></td><td>Topics in your words, which ideas sit where, connect and conflict links, open items, the work under each idea, your pins and "seen" marks</td><td>Rebuilt by maintenance; topics split and merge weekly</td></tr>
+          </tbody>
+        </table></div>
+        <p class="small">The last two rows are the two memory structures you asked for: one shaped for an AI, one shaped for you.</p>
+        <span class="src">DESIGN.md §1.1; research notes 13 and 23</span>
+      </div>
+    </details>
+
+    <details class="card t" id="card-maintenance">
+      <summary><b>Maintenance, stage by stage</b><span>What runs in the background, and what we take from ChatGPT, Codex and Anthropic</span></summary>
+      <div class="body">
+        <div class="tablewrap wide"><table>
+          <thead><tr><th>Stage</th><th>What runs</th><th>Safeguard</th></tr></thead>
+          <tbody>
+            <tr><td><em>Trigger</em></td><td>A session goes idle; each night; weekly for stage 6</td><td>Active sessions skipped; a daily budget Northstar counts itself</td></tr>
+            <tr><td>1. Replay</td><td>New turns, and items used since last time; those touching live goals first</td><td>Each new item judged next to its nearest old ones</td></tr>
+            <tr><td>2. Extract</td><td>What you stated, adopted, rejected or revised, each with its exact quote, on that session's own AI family</td><td>The speaker comes from the app; "unclear" allowed</td></tr>
+            <tr><td>3. Integrate</td><td>Attach, update (keeping the old version), keep a conflict, or start a new idea</td><td>Models propose; one write gate decides</td></tr>
+            <tr><td>4. Refresh</td><td>"Planning to X in July" becomes "did X in July", as ChatGPT does</td><td>The old line is kept</td></tr>
+            <tr><td>5. Check</td><td>Every item cites its chat turns; nothing dropped without a reason; adopted AI claims and risky changes checked by the other model family</td><td>Never by the family that did the work or said the claim; otherwise "not independent". Failures wait aside</td></tr>
+            <tr><td>6. Abstract, restructure</td><td>Broader ideas only from items seen in two contexts; your topics split and merge</td><td>Never from summaries or overviews</td></tr>
+            <tr><td>7. Rebuild</td><td>What the AI gets, start notes and your structure, in a safety copy</td><td>Swapped in only after stage 5 passes</td></tr>
+            <tr><td>8. Log</td><td>What changed and why; any change undone in one step</td><td>Never read back as a source</td></tr>
+          </tbody>
+        </table></div>
+        <ul class="small">
+          <li><strong>From ChatGPT's Dreaming:</strong> a background process, memory kept current, time-bound facts re-dated, and a page to see and correct it. OpenAI does not say how it stores or checks its memory state.</li>
+          <li><strong>From Codex memories</strong> (open code): each idle session distilled, then one step that integrates. Codex builds summaries from summaries, which we avoid.</li>
+          <li><strong>From Anthropic's Dreams</strong> (preview): a new copy you keep or discard, never changing the old one. Our safety copy is the same idea.</li>
+          <li><strong>Why background work pays:</strong> working ahead between sessions used about 5× less compute at answer time, and was up to 13–18% more accurate, when the next request was predictable. Resuming your own work is predictable.</li>
+        </ul>
+        <span class="src">DESIGN.md §1.2; research notes 03, 06, 13 and 23</span>
+      </div>
+    </details>
+
+    <details class="card m" id="card-memory">
+      <summary><b>Memory</b><span>Plain facts, strict and usually empty; your views and working style only when the AI asks</span></summary>
+      <div class="body">
+        <ul class="small">
+          <li>When you resume a piece of work: its start note (goal, decisions, ruled-out options, best version, open threads).</li>
+          <li>In a new chat: plain facts only if very strongly linked; usually nothing, so the AI's own answer stays fresh.</li>
+          <li>After the app shortens a long chat: the session's facts come back.</li>
+          <li>Facts, not judgment (you confirmed): your views, principles and working style go only when the AI asks, following your "provide memory for the AI agents/LLM, not to alter the behaviours".</li>
+          <li>Your apps' own memory, ChatGPT's included, stays as it is. Northstar adds what crosses apps, and your knowledge.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="card h" id="card-overview">
+      <summary><b>Your overview, and the sketch round</b><span>What the research found, and what the sketches will compare</span></summary>
+      <div class="body">
+        <ul class="small">
+          <li><strong>Big picture:</strong> a few topics in your words, with connect and conflict lines, and what to learn marked "open".</li>
+          <li><strong>A topic:</strong> its ideas, one line each, marked yours or adopted from a named AI.</li>
+          <li><strong>An idea:</strong> one to three pieces of your work, then its sources. No IDs or file paths.</li>
+          <li><strong>Where:</strong> a small card inline in Claude desktop chat (and ChatGPT if your plan allows) that opens to full screen, and a text version in Claude Code's chat.</li>
+        </ul>
+        <h4>What the research found</h4>
+        <ul class="small">
+          <li>No product or study tests glancing at an AI-made overview of one person's ideas.</li>
+          <li>Studies back the parts: a small first screen, a layout that keeps what you saw in place, your own words and work as cues, origin marked quietly, one-step corrections.</li>
+          <li>An inline card in Claude holds about 4–5 data points and two actions, so the full overview opens to full screen.</li>
+        </ul>
+        <h4>The sketch round</h4>
+        <ul class="small">
+          <li>On your website work plus the chats you add: a topic outline with conflict pairs against a stable topic map, with the same items and work cues.</li>
+          <li>The panel stays revisit-only, with "ask about this for my problem" one step into the chat. Whether you take that step tells us whether you want expansion.</li>
+        </ul>
+        <span class="src">DESIGN.md §6; research notes 20, 23 and 25</span>
+      </div>
+    </details>
+
+    <details class="card" id="card-proto">
+      <summary><b>First prototype: Claude Code on this Mac</b><span>What is in it, effort, cost, and what comes after</span></summary>
+      <div class="body">
+        <ul class="small">
+          <li><strong>In it:</strong> capture, the core, maintenance, memory, focus with its moments, your overview in Claude's desktop chat, the robustness core, and the tests.</li>
+          <li><strong>Effort:</strong> about 10 builder-weeks (±50%), our estimate by part.</li>
+          <li><strong>Running cost:</strong> about $25–85 a month at 20–100 turns a day (±2×) through the APIs, mostly maintenance; your plan's API credits may cover part. Measured in the first week, under a cap you set.</li>
+          <li><strong>Then:</strong> Windows; Codex (you trust Northstar's hooks there once, and again after updates); Claude desktop chat; ChatGPT desktop chat (it needs an OpenAI API key for its tunnel, and may be read-only on a personal plan); more computers; the phone.</li>
+          <li><strong>Needed from you then:</strong> the go-ahead for your sessions; an Anthropic API key (or your plan's credits) and an OpenAI API key; which repositories and folders are personal; about 15 minutes for a marking page and 10 for version pairs.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="card" id="card-settings">
+      <summary><b>Settings</b><span>Defaults you can change any time</span></summary>
+      <div class="body">
+        <div class="tablewrap"><table>
+          <thead><tr><th>Setting</th><th>Default</th></tr></thead>
+          <tbody>
+            <tr><td>How background work reaches your AI</td><td>The vendors' APIs, on the same model families</td></tr>
+            <tr><td>Checks across vendors</td><td>On (your answer)</td></tr>
+            <tr><td>Focus firmness</td><td>Normal (also: off, gentle, firm)</td></tr>
+            <tr><td>Focus moments</td><td>New day, half the length limit, on request</td></tr>
+            <tr><td>Focus's quality check</td><td>On where versions exist, once calibrated</td></tr>
+            <tr><td>Line when a reply brings back a ruled-out option</td><td>In the AI's next reply (or only to you, or off)</td></tr>
+            <tr><td>Maintenance changes</td><td>Applied after checks, with a log (or held for you to adopt)</td></tr>
+            <tr><td>Your views and working style</td><td>Only when the AI asks</td></tr>
+            <tr><td>Lasting project knowledge</td><td>Each product's memory and files (your default)</td></tr>
+            <tr><td>When a project idea becomes personal</td><td>After a second context (your default)</td></tr>
+            <tr><td>Search</td><td>A small model on this Mac (or keywords only)</td></tr>
+            <tr><td>What is captured</td><td>Personal accounts, repositories and folders you mark</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </details>
+
+    <details class="card" id="card-risks">
+      <summary><b>Risks</b><span>What could go wrong, and what we do about it</span></summary>
+      <div class="body">
+        <ol class="small">
+          <li>The moments catch about half of your moments (6 of 13, in-sample). You can always ask; smarter triggers are tested before use.</li>
+          <li>A wrong suggestion is costly and a false raise feels like nagging, so silence is the default and the check says "can't tell" when unsure.</li>
+          <li>Focus thinks inside the conversation that drifted, and its note stays in the chat's history. The tests check both, and a hidden sub-task takes over only if it does better.</li>
+          <li>It costs more than we first said: about $25–85 a month through the APIs. A cap you set, and the first week measured.</li>
+          <li>Checks across vendors send excerpts between Anthropic and OpenAI: allowed by you, limited to what a check needs, and logged.</li>
+          <li>AI judges are weakest on close versions and on taste, so the quality check is only a second opinion.</li>
+          <li>Maintenance can drift over months, as other systems do, so every item cites its source, a safety copy is checked first, and an eight-week drift test runs.</li>
+          <li>The chat apps have no hooks: there focus works only when you ask. ChatGPT may allow only read access on a personal plan.</li>
+          <li>The overview's look is unproven until a sketch lands.</li>
+        </ol>
+      </div>
+    </details>
+
+    <details class="card a" id="card-research">
+      <summary><b>The research behind each part</b><span>The strongest sources, stated as the studies state them</span></summary>
+      <div class="body">
+        <div class="tablewrap wide"><table>
+          <thead><tr><th>Part</th><th>Research behind it</th></tr></thead>
+          <tbody>
+            <tr><td>Memory built from kept chat history</td><td>Your probes (value judged at capture was chance, with uncertain labels); one rewrite collapsed a context below no memory (ACE); memory systems miss over half of updates (HaluMem 2025)</td></tr>
+            <tr><td>Maintenance in the background</td><td>ChatGPT's Dreaming (product post, internal tests); Codex memories (open code); Anthropic's Dreams (preview); working ahead between sessions (Letta 2025)</td></tr>
+            <tr><td>Where it runs apart, and the route</td><td>Judges favour "new" (2025) and what users like (Sharma et al. 2023); a 64.5% average blind spot for one's own errors (Tsui, NeurIPS 2025); errors overlap more between similar models (Goel et al., ICML 2025); judges favour their own text (Panickssery et al. 2024); vendor terms and guidance on automation (SPINE P7, P8, P11)</td></tr>
+            <tr><td>Value waits for evidence</td><td>Selective consolidation (Go-CLS, Nature Neuroscience 2023); need × gain (Mattar and Daw 2018); strict selective addition beats add-all (Xiong et al. 2025)</td></tr>
+            <tr><td>Re-check on use; fade, never delete</td><td>Parallels from human memory: a retrieved memory becomes changeable again after a mismatch (Nader, Schafe and LeDoux 2000); the odds a memory is needed follow its past use (Anderson and Schooler 1991)</td></tr>
+            <tr><td>One write gate</td><td>Weak self-correction (Huang et al., ICLR 2024); models condition on their own earlier errors (Sinha et al., ICLR 2026)</td></tr>
+            <tr><td>Captured text, and focus's note, treated as data</td><td>Detection defences fail under attack ("The Attacker Moves Second", 2025); only binding origin at write time stops laundering (Louck 2026)</td></tr>
+            <tr><td>Memory: strict, plain facts, views on request</td><td>A memory agent that injects a reminder or stays silent raised pass@1 by 8.3 and 6.8 points and beat always-on injection (Wu et al. 2026, preprint); memory profiles raised agreement sycophancy up to 45% (Jain et al., CHI 2026)</td></tr>
+            <tr><td>Focus: fixed moments</td><td>Your trigger replay; proactive agents false-alarm about half the time (Lu et al., ICLR 2025); 52% engaged after commits, 62% dismissed mid-task (Kuo et al., IUI 2026)</td></tr>
+            <tr><td>Focus: thinks, then a note for one reply</td><td>One-reply instruction, not kept afterwards, cut drift 87% on a simulated persona (Leins et al. 2026); tutoring systems split deciding from saying (StratL 2025; Bridge 2024; Tutor CoPilot trial, suggestions to human tutors); goal, needs, gap (GenMentor 2025)</td></tr>
+            <tr><td>Focus: rare, an offer, about the task</td><td>More frequent help halved preference (Chen et al., CHI 2025); feedback aimed at the person backfires (Kluger and DeNisi 1996)</td></tr>
+            <tr><td>Focus: blind quality check</td><td>Order bias and the both-orders fix (Zheng et al., NeurIPS 2023); judges favour "new" (2025) and what users like (Sharma et al. 2023); design taste near 73% (AesEval-Bench, ICLR 2026)</td></tr>
+            <tr><td>Fresh start from distilled state</td><td>All information in one prompt kept 95.1% of single-turn performance (Laban et al., ICLR 2026); replacing a model's own earlier replies raised later performance (Li et al. 2026)</td></tr>
+            <tr><td>Your overview</td><td>No study of glancing at an AI-made overview of one person's ideas; encoding specificity (Tulving and Thomson 1973); origin recalled worse a week later (Zindulka et al., CHI 2026); transactive memory (Wegner, Erber and Raymond 1991); a model-made concept map cut rated mental demand 31.5% at equal accuracy for 14 students reading a text (Han and Choi, BEA 2025)</td></tr>
+          </tbody>
+        </table></div>
+        <span class="src">Full table: DESIGN.md §14; research notes 01, 03, 06, 13, 17–25</span>
+      </div>
+    </details>
+
+    <details class="card" id="card-earlier">
+      <summary><b>Your answers so far, as recorded</b><span>What you picked and wrote on 24 and 25 Oct, now in GOAL.md</span></summary>
+      <div class="body">
+        <h4>Round 3 (25 Oct)</h4>
+        <ul class="small">
+          <li><strong>Dreaming:</strong> partly. You meant Northstar is "in a sense like" ChatGPT's Dreaming memory system: memory structures for AI and human, help with focus and memory, and "it still works with existing AI like ChatGPT and Claude, it is not on its own". You added: "Better commercial this way and able to embrace the powerful world class AI".</li>
+          <li><strong>Route:</strong> "you design, based on what I told you".</li>
+          <li><strong>Checks across vendors:</strong> yes.</li>
+          <li><strong>Sketch material:</strong> your website work plus chats you add; you offered "a few chat example".</li>
+          <li><strong>Phone:</strong> not sure yet.</li>
+        </ul>
+        <h4>Round 2 (24 Oct)</h4>
+        <ul class="small">
+          <li><strong>Focus:</strong> confirmed as described.</li>
+          <li><strong>Where the AI runs:</strong> with Claude, ChatGPT or whatever harness you use, "generalized and instead of seperated, unless you tell me it has to".</li>
+          <li><strong>Dreaming:</strong> "the ChatGPT dreaming memory system, not literally sleeping dreaming".</li>
+          <li><strong>Go ahead:</strong> yes, with those two changes.</li>
+        </ul>
+        <h4>Round 1 (24 Oct)</h4>
+        <ul class="small">
+          <li><strong>Focus:</strong> lighter, plus its own quality check; not "an alarm system".</li>
+          <li><strong>Overview:</strong> not sure yet whether it should also expand ideas, so the sketch round tries both.</li>
+          <li><strong>Readings:</strong> "facts, not judgment" is right; the other two you left to the design.</li>
+          <li><strong>First prototype:</strong> this Mac first, Windows right after.</li>
+          <li><strong>The design:</strong> approved with changes: an architecture for the AI and for you, something like OpenAI's dreaming, and research behind it.</li>
+        </ul>
+      </div>
+    </details>
+
+  </div>
+</section>
+
+<footer>
+  <span>Design document: <code>docs/design/revision-2026-10-23/DESIGN.md</code>. Evidence: <code>docs/EXPLORATION.md</code> §2 and §3, and research notes 01 to 25.</span>
+  <span>Nothing on this page is drawn from your chats; your probe data stays in your probe workspace.</span>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var DRAFT_KEY = "northstar-design-review-2026-10-25-r4";
+  var DOC_PATH = "review/answers-4";
+  var TEXT_IDS = ["note-next"];
+  var form = document.getElementById("answerForm");
+  var fallback = document.getElementById("copyFallback");
+  var statusEls = document.querySelectorAll(".savestatus");
+  var db = null;
+
+  function collect(){
+    var out = {};
+    TEXT_IDS.forEach(function(id){ var el = document.getElementById(id); out[id] = el ? el.value.trim() : ""; });
+    return out;
+  }
+  function apply(data){
+    if(!data) return;
+    TEXT_IDS.forEach(function(id){
+      var el = document.getElementById(id);
+      if(el && typeof data[id] === "string") el.value = data[id];
+    });
+  }
+  function asText(a){
+    return "Northstar three-job design, version 3.2: my note (" + new Date().toISOString().slice(0,16).replace("T"," ") + ")\n" + (a["note-next"] || "(no note)");
+  }
+  function setStatus(msg, kind){
+    statusEls.forEach(function(el){ el.textContent = msg; el.className = "savestatus" + (kind ? " " + kind : ""); });
+  }
+  function saveDraft(){ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(collect())); }catch(e){} }
+  var draftTimer = null;
+  form.addEventListener("input", function(){ clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 400); });
+
+  try{ var raw = localStorage.getItem(DRAFT_KEY); if(raw) apply(JSON.parse(raw)); }catch(e){}
+
+  window.__northstarAnswers = function(){ return asText(collect()); };
+
+  function save(){
+    saveDraft();
+    if(!db){
+      setStatus("Saving needs this page open on claude.ai. Use Copy my note and paste it into the chat.", "err");
+      return;
+    }
+    var body = collect();
+    body.savedAt = new Date().toISOString();
+    setStatus("Saving…");
+    function done(){ setStatus("Saved " + new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) + ". You can tell the chat you are done.", "ok"); }
+    function fail(){ setStatus("Could not save here. Use Copy my note and paste it into the chat.", "err"); }
+    db.doc(DOC_PATH).set(body).then(done).catch(function(err){
+      if(err && err.code === "unavailable"){
+        setTimeout(function(){ db.doc(DOC_PATH).set(body).then(done).catch(fail); }, 600 + Math.random() * 600);
+      } else { fail(); }
+    });
+  }
+  form.addEventListener("submit", function(ev){ ev.preventDefault(); save(); });
+
+  document.querySelectorAll("[data-copy]").forEach(function(b){
+    b.addEventListener("click", function(){
+      var text = asText(collect());
+      function showFallback(){
+        fallback.value = text;
+        fallback.hidden = false;
+        fallback.focus();
+        fallback.select();
+        setStatus("Select all and copy the text below.", "");
+      }
+      try{
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(text).then(function(){ setStatus("Copied. Paste it into the chat.", "ok"); }, showFallback);
+        } else { showFallback(); }
+      }catch(e){ showFallback(); }
+    });
+  });
+
+  if(window.claude && typeof window.claude.use === "function"){
+    window.claude.use("db").then(function(ns){
+      if(!ns) return;
+      db = ns;
+      db.doc(DOC_PATH).get().then(function(snap){
+        if(!snap || !snap.exists) return;
+        var data = snap.data();
+        var hasDraft = false;
+        try{ hasDraft = !!localStorage.getItem(DRAFT_KEY); }catch(e){}
+        if(!hasDraft) apply(data);
+        if(data && data.savedAt) setStatus("Last saved " + new Date(data.savedAt).toLocaleString([], {dateStyle:"medium", timeStyle:"short"}) + ".", "");
+      }).catch(function(){});
+    }).catch(function(){});
+  }
+})();
+</script>

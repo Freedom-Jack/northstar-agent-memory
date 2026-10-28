@@ -1,0 +1,235 @@
+<title>Overview form research</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: one reading column, the same family as the Northstar design review page. Summary first, then the three needs, the direction, the evidence, and the one choice left. */
+:root{
+  --bg:#F5F6F9; --surface:#FFFFFF; --ink:#18202D; --muted:#566172; --line:#D9DFE8; --line-strong:#B9C2CF;
+  --accent:#2446A0; --accent-soft:#E5EBF8;
+  --n1:#56479A; --n1-soft:#ECE8F8;
+  --n2:#9C5410; --n2-soft:#FAEEDF;
+  --n3:#0F6B66; --n3-soft:#DDF1EE;
+  --warn:#9A3B1E; --warn-soft:#FBE9E2;
+  --font-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --font-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F131A; --surface:#161C26; --ink:#E5E9F0; --muted:#9BA6B6; --line:#283140; --line-strong:#3A4557;
+    --accent:#93ACF2; --accent-soft:#1C2640;
+    --n1:#B2A6EE; --n1-soft:#211D37; --n2:#EBA563; --n2-soft:#2C2114; --n3:#5FC7BE; --n3-soft:#112927;
+    --warn:#F1A083; --warn-soft:#2E1B15;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F131A; --surface:#161C26; --ink:#E5E9F0; --muted:#9BA6B6; --line:#283140; --line-strong:#3A4557;
+  --accent:#93ACF2; --accent-soft:#1C2640;
+  --n1:#B2A6EE; --n1-soft:#211D37; --n2:#EBA563; --n2-soft:#2C2114; --n3:#5FC7BE; --n3-soft:#112927;
+  --warn:#F1A083; --warn-soft:#2E1B15;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.6 var(--font-body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:48rem;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:36px}
+h1,h2,h3{font-family:var(--font-display);margin:0;line-height:1.15;text-wrap:balance}
+h1{font-size:clamp(2rem,1.4rem + 2.6vw,2.8rem);font-weight:700;letter-spacing:-.01em}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.08rem;font-weight:700}
+p{margin:0}
+ul,ol{margin:0;padding-left:1.25rem;display:flex;flex-direction:column;gap:6px}
+strong{font-weight:600}
+a{color:var(--accent);text-underline-offset:3px}
+code{font-family:var(--font-mono);font-size:.85em;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.eyebrow{font:500 .74rem/1.2 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.small{font-size:.9rem}
+.muted{color:var(--muted)}
+section{display:flex;flex-direction:column;gap:14px}
+header{display:flex;flex-direction:column;gap:14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.summary{display:flex;flex-direction:column;gap:8px;padding-left:1.1rem;font-size:1.02rem}
+.summary li::marker{color:var(--accent)}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{font:500 .74rem/1 var(--font-mono);color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 9px;white-space:nowrap}
+
+/* The three needs */
+.needs{display:grid;gap:12px}
+.need{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px}
+.need .num{grid-row:1 / span 3;font:700 1.6rem/1 var(--font-display);color:var(--c);padding-top:2px}
+.need h3{color:var(--c)}
+.need .form{font-weight:600}
+.need .why{font-size:.9rem;color:var(--muted)}
+.need .chip{justify-self:start;font:500 .72rem/1 var(--font-mono);border:1px solid var(--c);color:var(--c);background:var(--cs);border-radius:999px;padding:4px 8px;margin-top:4px}
+.n1{--c:var(--n1);--cs:var(--n1-soft)} .n2{--c:var(--n2);--cs:var(--n2-soft)} .n3{--c:var(--n3);--cs:var(--n3-soft)}
+
+/* The direction: one overview, three doors */
+.doors{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:10px}
+.door{border-radius:var(--radius);padding:12px 14px;background:var(--cs);border:1px solid color-mix(in srgb,var(--c) 35%,transparent);display:flex;flex-direction:column;gap:6px;min-width:0}
+.door b{font-family:var(--font-display);color:var(--c);font-size:1rem}
+.door span{font-size:.88rem}
+.door.big{grid-row:span 2}
+.mini{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:4px}
+.mini div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:.78rem;line-height:1.35}
+.mini div em{display:block;font-style:normal;color:var(--muted);font-size:.72rem}
+@media (max-width:600px){.doors{grid-template-columns:1fr}.door.big{grid-row:auto}}
+.changes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.changes > div{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;min-width:0}
+.changes h3{font-size:.95rem;margin-bottom:6px}
+@media (max-width:600px){.changes{grid-template-columns:1fr}}
+
+/* Evidence list */
+.ev{list-style:none;padding:0;gap:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+.ev li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 14px;padding:10px 14px;border-top:1px solid var(--line)}
+.ev li:first-child{border-top:0}
+.ev .fig{font:600 .95rem/1.3 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--accent);text-align:right;white-space:nowrap}
+.ev .src{grid-column:1 / -1;font-size:.78rem;color:var(--muted)}
+@media (max-width:520px){.ev li{grid-template-columns:1fr}.ev .fig{text-align:left}}
+
+.choice{border:1.5px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.opts > div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0}
+.opts b{display:block;margin-bottom:4px}
+@media (max-width:600px){.opts{grid-template-columns:1fr}}
+footer{border-top:1px solid var(--line);padding-top:16px;font-size:.86rem;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Northstar · overview research · 27 Oct</span>
+  <h1>The best form for your overview</h1>
+  <ul class="summary">
+    <li><strong>No study tests this exact view,</strong> so the answer rests on nearby evidence: about 200 sources across research papers, practitioners' writing and products.</li>
+    <li><strong>Your three needs want different forms:</strong> a big picture, picking up where you left off, and asking about your past. The sketches only showed the first. Both times you used "Ask about this", you asked about your past.</li>
+    <li><strong>The shape matters less than what's in it.</strong> What matters is few entries, your own words, your work on each, and a way onward from each one. So the map you prefer can stay, made smarter.</li>
+  </ul>
+  <div class="tags">
+    <span class="tag">4 research notes</span>
+    <span class="tag">Key numbers checked against sources</span>
+    <span class="tag">One choice for you</span>
+  </div>
+</header>
+
+<section aria-labelledby="needs-h">
+  <span class="eyebrow">What works, need by need</span>
+  <h2 id="needs-h">Three needs, three forms</h2>
+  <div class="needs">
+    <div class="need n1">
+      <span class="num">1</span>
+      <h3>See the big picture of what you think</h3>
+      <div class="form">A few topics, each with two to four of your ideas in your own words, each with one piece of your work. Conflicts shown side by side; "open" and "changed since you last looked" marked; the rest one step away.</div>
+      <div class="why">Research, practitioners' hub pages and products all point here. Graphs are backed only for seeing shape and following links, at small size.</div>
+      <span class="chip">weak to moderate</span>
+    </div>
+    <div class="need n2">
+      <span class="num">2</span>
+      <h3>Get back into a piece of work</h3>
+      <div class="form">Where you left off: the work as you left it (its last state and last few steps), what changed since, and your stated goal and next step. One click opens the work itself.</div>
+      <div class="why">Studies of resuming work back the work as you left it as the best cue. A summary is only a label.</div>
+      <span class="chip">moderate</span>
+    </div>
+    <div class="need n3">
+      <span class="num">3</span>
+      <h3>Answer a question about your past</h3>
+      <div class="form">Ask in the chat. You get exact quotes from your own chats first, each showing where it came from and opening that place. If nothing is found, the answer says where it looked.</div>
+      <div class="why">The strongest agreement across products. It is also how you used the "Ask about this" button.</div>
+      <span class="chip">moderate, strongest agreement</span>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="dir-h">
+  <span class="eyebrow">The direction</span>
+  <h2 id="dir-h">One overview, three ways in</h2>
+  <div class="doors" role="img" aria-label="One overview with three ways in: a smarter map for the big picture, where you left off for work in progress, and ask in the chat for questions about your past.">
+    <div class="door big n1">
+      <b>The big picture, as a smarter map</b>
+      <span>Your topics as regions, each showing only a few of your ideas in your own words, with your work on each. Lines appear for the idea you're looking at, not all at once. The layout stays put between visits.</span>
+      <div class="mini">
+        <div>A topic of yours<em>3 of 10 ideas · 1 open</em></div>
+        <div>Another topic<em>2 of 3 ideas · changed</em></div>
+        <div>A third topic<em>3 of 5 ideas</em></div>
+        <div>Ideas across topics<em>2 of 4 ideas</em></div>
+      </div>
+    </div>
+    <div class="door n2">
+      <b>Where you left off</b>
+      <span>For each piece of work in progress: how you left it, what changed since, and the next step.</span>
+    </div>
+    <div class="door n3">
+      <b>Ask</b>
+      <span>A question in the chat, answered with quotes from your own chats first, each opening its place.</span>
+    </div>
+  </div>
+  <div class="changes">
+    <div>
+      <h3>What changes from sketch B</h3>
+      <ul class="small">
+        <li>Far fewer entries per topic</li>
+        <li>Your own words, not the AI's rewording</li>
+        <li>A piece of your work on every entry</li>
+        <li>Lines only around the idea you're on</li>
+        <li>Every entry opens "ask" or "where you left off"</li>
+      </ul>
+    </div>
+    <div>
+      <h3>What stays, as you asked</h3>
+      <ul class="small">
+        <li>Big picture first, grouped by topic</li>
+        <li>Connect and conflict lines</li>
+        <li>Your real work brings it back</li>
+        <li>One line per item</li>
+        <li>Inside your assistant, when you ask</li>
+      </ul>
+    </div>
+  </div>
+  <p class="small muted">In Claude Code, the same entries appear as a two-level text outline. Whether the overview should also apply your ideas to new problems stays your call. Products all do that in the chat, not in the overview, and that is where it would happen here too.</p>
+</section>
+
+<section aria-labelledby="ev-h">
+  <span class="eyebrow">The evidence that decides the details</span>
+  <h2 id="ev-h">What the studies show</h2>
+  <ul class="ev">
+    <li><span>People recalled an email's <strong>topic</strong> far more often than <strong>when</strong> it was sent. So topics come first and time is only a filter.</span><span class="fig">85.1% vs 57.5%</span><span class="src">Elsweiler, Baillie and Ruthven, ACM TOIS 2008, email re-finding</span></li>
+    <li><span>A map beat an outline only slightly for students, and made no real difference for strong learners. You're the expert on your own ideas, so your preference can pick the shape.</span><span class="fig">g = 0.28</span><span class="src">Nesbit and Adesope 2006, meta-analysis of 10 studies comparing maps with outlines or lists</span></li>
+    <li><span>ChatGPT's memory answered far fewer questions about past chats than the same model reading the full history. So answers come from your saved chats, quoted.</span><span class="fig">57.7% vs 91.8%</span><span class="src">LongMemEval pilot, ICLR 2025</span></li>
+    <li><span>One wrong detail in an AI summary changed what people remembered seeing. So your ideas appear in your own words.</span><span class="fig">83.6% → 44.8%</span><span class="src">Sim, Eiger and Kohno, AIES 2026, 328 people</span></li>
+    <li><span>People who learned from an AI's synthesis knew the topic less deeply than people who searched for themselves.</span><span class="fig">n = 10,462</span><span class="src">Melumad and Yun, PNAS Nexus 2025, 7 experiments</span></li>
+    <li><span>Citations raised trust even when they were random. So every source must open the real place.</span><span class="fig">n ≈ 300</span><span class="src">Ding et al., AAAI 2025</span></li>
+    <li><span>Asking can lose to plain search. Google paused Ask Photos for being slow, then brought it back with ordinary results shown first.</span><span class="fig">June 2025</span><span class="src">Google Photos product lead; press coverage</span></li>
+    <li><span>No maker of a graph view publishes how often it's used. In 2025 they added tables and chat instead. NotebookLM's mind map turns a click into a question in the chat.</span><span class="fig">no data</span><span class="src">Obsidian, Heptabase and Google help pages; research note 26d</span></li>
+  </ul>
+</section>
+
+<section aria-labelledby="why-h">
+  <span class="eyebrow">Looking back</span>
+  <h2 id="why-h">Why the sketches fell short</h2>
+  <ul>
+    <li><strong>Sketch A</strong> listed everything, like a full table of contents, in the AI's words. Practitioners' hub pages list only a few entry points.</li>
+    <li><strong>Sketch B</strong> showed the shape but not the meaning. It drew every line at once, and its entries led nowhere new.</li>
+    <li><strong>Both</strong> covered only the big picture, while your questions were about your past. And the timed lookups felt like a quiz, because asking does that job best.</li>
+  </ul>
+</section>
+
+<section aria-labelledby="choice-h">
+  <span class="eyebrow">Your decision</span>
+  <h2 id="choice-h">The one choice left</h2>
+  <div class="choice">
+    <p>On 15 Oct you picked a map. The research says the shape matters less than what's in it, so either option works if what's in it follows the evidence. Which should be the first view?</p>
+    <div class="opts">
+      <div><b>A smarter map first</b><span class="small">The direction above. It keeps your pick, with fewer entries, your words, your work, and lines around the idea you're on.</span></div>
+      <div><b>A text hub first, map second</b><span class="small">The practitioners' favourite. It reads anywhere, including Claude Code, and the map stays one click away.</span></div>
+    </div>
+    <p class="small muted">Answer in the chat. Then I'll build one view with all three ways in, from your real chats, for you to look at and react to. No timer this time.</p>
+  </div>
+</section>
+
+<footer>
+  <span>Full notes: <code>docs/research/round6/26-best-form-synthesis.md</code>, with 26a (finding and resuming), 26b (showing your own ideas), 26c (practitioners) and 26d (products).</span>
+  <span>Nothing on this page comes from your chats; the topic boxes are placeholders.</span>
+</footer>
+
+</div>
