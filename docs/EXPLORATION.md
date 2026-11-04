@@ -1,14 +1,24 @@
 # Northstar: where the exploration stands
 
-**Written 2026-10-14, as a handoff to a fresh session; updated 2026-10-24.** [`GOAL.md`](GOAL.md) is authoritative and overrides this note. Read GOAL.md first (especially §1 and §2 from 2026-10-10 to 2026-10-24), then this note.
+**Written 2026-10-14, as a handoff to a fresh session; updated 2026-10-28.** [`GOAL.md`](GOAL.md) is authoritative and overrides this note. Read GOAL.md first (especially §1 and §2 from 2026-10-10 to 2026-10-28), then this note.
 
-**Status (2026-10-28).** The probe phase is closed. The three-job design (revision 3.2) is settled except for one piece: the overview's form. After the deep research (notes 26, 26a–26d) the user picked a smarter map first. They found the look-and-react round of it not helpful (below). The next step for the overview is not agreed yet.
+**Status (2026-10-28, latest).** The design phase is closed. [`DESIGN.md`](design/revision-2026-10-23/DESIGN.md) version 3.4 is the baseline (3.3, with the route revised on 2026-10-29), and [`MEMORY-ARCHITECTURE.md`](design/revision-2026-10-23/MEMORY-ARCHITECTURE.md) was approved as written, with its three §10 leans. The user's last decisions (GOAL §1, §2, 2026-10-28):
+- research decides the design, not the user's reactions, and each research question ends in a decision;
+- the overview is chat first, map on request ([note 27](research/round6/27-overview-medium.md) §4);
+- the tests use published benchmarks, automatic checks and measures from normal use, not the user's blind picks; any session with the user is optional.
+
+**Next:** build the baseline prototype in Claude Code on this Mac (DESIGN §9), in the order of DESIGN §10, starting with the measurement harness and the baseline without Northstar. Then measure it (DESIGN §8) and improve it by measuring. There are no more look-and-react rounds.
+
+**2026-10-29.** The user gave the go-ahead for their sessions and marked their personal folders, and asked that Northstar's hidden model calls run on the apps or harness it is on, on their own plans, not on separate API keys (GOAL §1, §2). DESIGN version 3.4 moves them to Claude Code's and Codex's headless modes (§1.4). The measurement harness is built and tested offline. The first measures from normal use, computed by code from the user's sessions before Northstar, are stored on this Mac only.
+
+**Earlier status (2026-10-28, before the hand-off).** The probe phase is closed. The three-job design (revision 3.2) was settled except for one piece: the overview's form. After the deep research (notes 26, 26a–26d) the user picked a smarter map first. They found the look-and-react round of it not helpful (below).
 - the design: [`design/revision-2026-10-23/DESIGN.md`](design/revision-2026-10-23/DESIGN.md);
+- the memory architecture: [`design/revision-2026-10-23/MEMORY-ARCHITECTURE.md`](design/revision-2026-10-23/MEMORY-ARCHITECTURE.md);
 - the review page: [`design/revision-2026-10-23/review.html`](design/revision-2026-10-23/review.html), published privately at https://claude.ai/artifact/Wj6HjavkFpxdT87EqBERyp;
 - the research findings page: [`research/round6/overview-form-findings.html`](research/round6/overview-form-findings.html), published privately at https://claude.ai/artifact/CpU3aQtQQcX8N7ZWHxZYrp;
 - the sketch round's brief and results: [`design/revision-2026-10-23/overview-sketch-round.md`](design/revision-2026-10-23/overview-sketch-round.md).
 
-The other documents in `docs/design/` are the earlier proposal of 2026-10-09, kept as a component library (DESIGN §12). Nothing is built.
+The other documents in `docs/design/` are the earlier proposal of 2026-10-09, kept as a component library (DESIGN §12). The build has started (status above).
 
 This note holds aggregated findings only. The user's chat content and probe data stay outside the repo, in `~/northstar-probe/` (§6).
 
@@ -26,9 +36,9 @@ This note holds aggregated findings only. The user's chat content and probe data
 - **Two gaps the user then named** (GOAL §1, §2):
   - the architecture's algorithms and data structures, for the AI's knowledge and for the user's;
   - how the human view appears: inside ChatGPT or Claude, a UI such as the maps, or a mind map.
-- **Next:** not agreed yet.
+- **Next:** decided later on 2026-10-28. The memory architecture answered the first gap and was approved; note 27 answered the second, and the user chose its recommendation, chat first, map on request. No more mock-up rounds (status above).
 
-**Start here (2026-10-27, research on the overview's form).**
+**Earlier (2026-10-27, research on the overview's form; its Next lines are done or superseded).**
 - **What ran:** four research agents in parallel, then a synthesis ([`research/round6/26-best-form-synthesis.md`](research/round6/26-best-form-synthesis.md)). About 1.19M subagent tokens against an estimate of 1.5M.
   - [26a](research/round6/26a-refinding-and-resumption.md): finding one's own things again and resuming work.
   - [26b](research/round6/26b-visualizing-own-ideas.md): visualization and learning science.
@@ -67,7 +77,7 @@ This note holds aggregated findings only. The user's chat content and probe data
 - **The test format confused the user** ("you want to test me on how much I remember the old chats?"). Explain that a timed lookup measures the tool, or use look-and-react rounds at the sketch stage.
 - **Next:** deep research on the best form, as the user asked. The plan and its token cost go to the user first. Note 25 was one desk pass and found no study of this kind of overview.
 
-**Start here (2026-10-25, revision 3.2).**
+**Earlier (2026-10-25, revision 3.2; its Next lines are done or superseded).**
 - **Round 3 answers** (page doc `review/answers-3`; verbatim in GOAL §1 and §2):
   - Q9 "Partly". ChatGPT's Dreaming memory system was a reference for what Northstar is "in a sense like", not a mechanism to copy. Northstar has memory structures (AI and human), helps with focus and memory, and "still works with existing AI like ChatGPT and Claude, it is not on its own". The user's reason: "Better commercial this way and able to embrace the powerful world class AI".
   - Q10 was left to the design: "you design, based on what I told you".
@@ -263,8 +273,9 @@ The WHAT is in GOAL.md. In short, as of 2026-10-14:
 - **The AI side** addresses in-session focus and cross-session continuity equally, gives context only when it is strongly linked to the conversation, and **must not stop the AI's own creativity**.
 - **(2026-10-15) Provide memory; don't alter the AI's behaviour.** Memory goes to the AI as plain context with no usage rules. It adds facts the AI lacks, not judgment. The reply has no visible memory talk. A new chat presumes no unstated facts and carries no lesson from one project into another; it does not start blank. The baseline is the user's real apps as they normally use them.
 - Product-agnostic, with connectors. Windows first, then iOS, then Mac. Many machines and phones share one memory.
-- Evaluation comes baseline-first, on the user's real topics. The user's own blind picks are the ground truth.
+- Evaluation comes baseline-first, on the user's real topics. The user's own blind picks are the ground truth (superseded on 2026-10-28, see the last item).
 - Uncertain design choices become **settings with defaults**.
+- **(2026-10-28)** The design is settled: DESIGN v3.3 is the baseline, built and then improved by measuring. Research decides the HOW, not the user's reactions. The tests use published benchmarks, automatic checks and measures from normal use instead of the user's blind picks, and any session with the user is optional.
 
 ## 2. What the probes showed
 
@@ -379,6 +390,8 @@ What is known before the picks:
   - This changes the confirmed HOW "judges whether the work is still getting better" (GOAL.md §2), so it goes to the user as a question, not a decision.
 
 ## 3. Hypotheses to explore next
+
+*History up to 2026-10-27. The tests and asks proposed in this section are superseded: from 2026-10-28 research decides the design, and the tests follow DESIGN §8.*
 
 **AI side: fresh answer first, memory second.** This is the user's idea (2026-10-14). The AI answers without memory, so its creativity is untouched. A separate pass then adds what memory contributes, either at the end or in parallel, followed by a synthesis. The pass would cover:
 - a conflict with a decision the user made;
@@ -515,13 +528,13 @@ Testing the value threshold needs chats on topics other than Northstar.
 
 | Path | What it is |
 |---|---|
-| [`GOAL.md`](GOAL.md) | Authoritative goal, with the user's verbatim answers through 2026-10-24 (round 2) |
+| [`GOAL.md`](GOAL.md) | Authoritative goal, with the user's verbatim answers through 2026-10-28 (the hand-off to the build) |
 | [`research/round3/`](research/round3/SYNTHESIS.md) | Research on formats, practice and tools, processing jobs, value threshold and scope, and memory injection |
 | [`research/round2/`](research/round2/SYNTHESIS.md) | Research on integration surfaces, drift, knowledge structure, robust maintenance and the memory-layer landscape |
 | [`research/round4/three-jobs-analysis.md`](research/round4/three-jobs-analysis.md) | The three-job framing (focus, memory, maintenance): how the jobs fit over one core, what each has shown and not shown, gaps, what to test next and open questions (2026-10-15) |
 | [`research/round5/`](research/round5/) | Prior art for the focus job (21); product facts per surface, checked 2026-10-23 (22); memory architectures and dreaming (23); evidence for focus speaking through the AI (24) |
-| [`research/round6/`](research/round6/26-best-form-synthesis.md) | How to show the user their overview: the first pass (25), the deep research on the best form (26a–26d) and its synthesis (26), and the findings page |
-| [`design/revision-2026-10-23/`](design/revision-2026-10-23/DESIGN.md) | **The current proposal**: the three-job design over one memory architecture (DESIGN.md) and its review page (review.html). Approved with changes twice on 2026-10-24; round 3 answered 2026-10-25; revision 3.2 current; the sketch round's brief is `overview-sketch-round.md` |
+| [`research/round6/`](research/round6/26-best-form-synthesis.md) | How to show the user their overview: the first pass (25), the deep research on the best form (26a–26d) and its synthesis (26), the findings page, and where the overview appears (27, the recommendation the user chose on 2026-10-28) |
+| [`design/revision-2026-10-23/`](design/revision-2026-10-23/DESIGN.md) | **The current design**: the three-job design (DESIGN.md, version 3.4, the baseline: 3.3 of 2026-10-28, with the route revised on 2026-10-29) and its memory architecture (MEMORY-ARCHITECTURE.md, approved as written on 2026-10-28). Also the review page (review.html) and the sketch round's brief (`overview-sketch-round.md`) |
 | [`design/`](design/README.md) | **Earlier proposals**: ARCHITECTURE.md, the 2026-10-09 revision documents, the review record, foundations and component specs. Useful as a component library (connector facts, maintainer robustness, platform analysis), not as the current design |
 
 ## 6. Local only: the probe workspace
@@ -546,4 +559,5 @@ Testing the value threshold needs chats on topics other than Northstar.
 5. ~~The five questions of the revised design.~~ Answered 2026-10-24 (GOAL §1, §2).
 6. ~~Q6–Q8 of revision 2.~~ Answered 2026-10-24 (GOAL §1, §2).
 7. ~~Q9–Q13 of revision 3.1.~~ Answered 2026-10-25 (GOAL §1, §2); the phone's place is still open ("not sure yet").
-8. New (2026-10-25): a few chats on other topics in `~/northstar-probe/inbox/` for the sketch round (replaces item 1).
+8. ~~New (2026-10-25): a few chats on other topics in `~/northstar-probe/inbox/` for the sketch round (replaces item 1).~~ No longer needed: the overview is measured in use (2026-10-28).
+9. New (2026-10-28): the inputs the build needs (DESIGN §9), each asked when the build first needs it: the go-ahead to read the user's sessions; API keys or plan credits (after SP-5); which repositories and folders are personal; a monthly cost cap.

@@ -235,6 +235,26 @@ Right after that round, the user named two gaps (verbatim):
 
 > "So there's two real gaps I see. First, not sure if you have decided and researched on the architecture for both AI knowledge and human knowledge. So I was assuming there's some algorithms and some data structure behind the scene for retrieval and storage. And also expansions and consolidation, etc. Those already in your notes? Second thing is that what is missing is the view of this human whether it's just blend into ChatGPT or Claude, it uses some sort of UI the maps you give me, or some mind map, that you do the research on those as well. So these are the gaps I kind of see."
 
+Later on 2026-10-28 the two gaps had answers: the memory architecture ([`design/revision-2026-10-23/MEMORY-ARCHITECTURE.md`](design/revision-2026-10-23/MEMORY-ARCHITECTURE.md)) for the first, and research note 27 ([`research/round6/27-overview-medium.md`](research/round6/27-overview-medium.md)) for the second. The user then handed the project over from the design phase to the build (verbatim):
+
+> "Take over Northstar from the design phase. The design is settled: first record the last decisions in the docs, then build the baseline prototype."
+
+Their decisions of 2026-10-28 (verbatim):
+
+> "1. Research decides the design, not my reactions. In my words: "you keep asking me for my personal feedbacks, but now you're making solutions that tailor very much to me ... think of this as research, PhD projects ... the research instead of feedback from me ... We can have a baseline versions and then eventually improve on it." So don't ask me to react to mock-ups or choose between designs. End each research question in a decision. Build a baseline, then improve it by measuring.
+>
+> 2. The overview: chat first, map on request, as `docs/research/round6/27-overview-medium.md` §4 recommends.
+>
+> 3. The tests: replace DESIGN §8's "your blind picks decide" with published benchmarks, automatic checks and measures from normal use. Start from the evaluation kit round 1 chose (`docs/research/09-evaluation-and-failure-modes.md`, and the evaluation row in `docs/research/SYNTHESIS.md`: LongMemEval subsets, HaluMem-style scoring of each memory operation, citation checks). Where no benchmark exists, such as memory pulled from personal AI chats, use the automatic checks. Any session with me is optional.
+>
+> 4. The memory architecture: "Approve as written". Its three §10 leans stand."
+
+On 2026-10-29, answering the inputs the build needed, the user gave the go-ahead to read their sessions ("Yes, read and refresh (Recommended)") and marked as personal: "~/Personal/Projects", "~/Personal/_MyStuff", "Claude Desktop scratch" and "Codex sessions". Asked for a monthly cap on Northstar's API spend, with their own API keys, they answered (verbatim):
+
+> "Ideally I would love to use Claude Desktop and ChatGPT desktop, or whatever harness it is on for it. Otherwise it kind of defeat the purposes?"
+
+They had not stored API keys: "Not yet".
+
 The original brief still applies: people learn continuously through AI conversations, research, work, reading and their own thinking, but this knowledge accumulates as disconnected fragments instead of a coherent, evolving understanding. Its foundations are:
 1. the structure of knowledge and memory;
 2. update and evolution without fragment pile-up or loss of history;
@@ -369,6 +389,25 @@ The end state is a working system that has been built and tested.
 | Which way in came first | "Where you left off", by the user's pick; the page logged the map first |
 | Two gaps the user sees | (1) **The architecture for both AI and human knowledge:** the algorithms and data structures behind storage and retrieval, expansion and consolidation; the user asks whether these are already in the notes. (2) **How the human view appears:** blended into ChatGPT or Claude, a UI such as the maps, or a mind map, with research on these too |
 
+**Answers of 2026-10-28, last** (the hand-off to the build; verbatim in §1). These supersede everything above where they conflict.
+
+| Topic | Answer |
+|---|---|
+| Status | **The design is settled.** The last decisions are recorded in the docs, and the baseline prototype is built next (DESIGN §9, §10) |
+| How design questions are decided | **Research decides the design, not the user's reactions.** A design tailored to one person's reactions does not generalize; the user asks us to "think of this as research, PhD projects". The user is not asked to react to mock-ups or to choose between designs. **Each research question ends in a decision.** The user's part is the goal (this file), go-aheads, and inputs only they can give |
+| How the design improves | **Build a baseline, then improve it by measuring** |
+| The overview's medium (gap 2) | **Chat first, map on request** (research note 27 §4). Questions about the past and getting back into a piece of work are ordinary chat answers that quote the user's record first. The big picture is the smarter map of the earlier 2026-10-28 answer, opened on request as a card inside the assistant (Claude first; ChatGPT where the plan allows); selecting an entry asks the chat. Claude Code and Codex show the big picture as a short outline |
+| How each job is tested | **Published benchmarks, automatic checks and measures from normal use**, instead of "your blind picks decide" (DESIGN §8 before version 3.3). Start from round 1's evaluation kit (research note 09; `research/SYNTHESIS.md`, evaluation row): LongMemEval subsets, HaluMem-style scoring of each memory operation, citation checks. Where no benchmark exists, such as memory pulled from personal AI chats, automatic checks. **Any session with the user is optional.** Unchanged: baseline first, against the user's real apps, with improvement defined in advance (2026-10-09, 2026-10-15) |
+| The memory architecture (gap 1) | **Approved as written** ([`MEMORY-ARCHITECTURE.md`](design/revision-2026-10-23/MEMORY-ARCHITECTURE.md)). Its three §10 leans stand as decisions: pulling may cross projects, and pushing never does; AI answers the user did not adopt come back only when the AI asks, labelled "not adopted"; a plan whose date has passed with no later record reads "planned X for <date>; no later record" |
+
+**Answers of 2026-10-29** (inputs for the build; verbatim in §1). These supersede everything above where they conflict.
+
+| Topic | Answer |
+|---|---|
+| The user's sessions | **Go-ahead** to read them and to refresh the copies kept outside the repo |
+| What is personal | **~/Personal/Projects, ~/Personal/_MyStuff, Claude Desktop scratch workspaces and Codex sessions.** Work folders and the organization's OneDrive stay out |
+| Where Northstar's hidden model calls run | **Ideally on the apps or harness Northstar runs in** (Claude Desktop, ChatGPT desktop, "or whatever harness it is on"), on the user's own plans, **not on separate API keys and spend**, which "kind of defeat the purposes". This supersedes the route the design chose on 2026-10-25 (the vendors' APIs), which the user had left to the design |
+
 ## 3. What we are building
 
 A **memory system**: an architected product, not a practice. It has these parts.
@@ -438,3 +477,9 @@ Earlier research findings are **constraints on the HOW**, not reasons to change 
 - **Goal-fidelity check at every stage.** Each deliverable is compared with this file, and any drift is fixed before the work moves on.
 - **What went wrong before.** The first design (v0.1/v0.2) replaced the goal with "a commitment ledger plus a weekly 20-minute ritual". The user rejected it. It is archived in `docs/archive/2026-10-07-rejected-design-v0.2/` for the record only. Do not build from it.
 - **Reframing needs the user.** A proposal to reframe the goal goes to the user as a question. It is never adopted unilaterally.
+- **Research decides the HOW, and the build is a baseline improved by measuring (2026-10-28).**
+  - Design questions are decided by research: published studies where they exist, and measurement of the baseline. Each research question ends in a decision, not a question to the user.
+  - The user is not asked to react to mock-ups or to choose between designs. One person's reactions should not shape a design meant to generalize, and each round costs the user's attention.
+  - After approval, build a baseline, then improve it by measuring: published benchmarks, automatic checks and measures from normal use. Any session with the user is optional.
+  - The user's part is the goal (this file), go-aheads, and inputs only they can give, such as keys, which folders are personal, and a cost cap.
+  - This rule governs the HOW only. A reframe of the WHAT still goes to the user as a question (the rule above).
