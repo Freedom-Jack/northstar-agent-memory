@@ -1,0 +1,139 @@
+# Northstar's versioned starting values (MEMORY-ARCHITECTURE §5.13, invariant I19).
+# A value changes only through a tested release: edit here, bump config_version,
+# and record why. Nothing here is personal; the user's own settings (cost caps,
+# personal folders) live in <data root>/settings.toml and override these.
+
+config_version = "2026-11-04.1"  # .1: the QA judge grades 8 answers a call; 2026-10-29.1: the harness route; 2026-10-28.2: OpenAI models, held-out sizes
+
+# Model IDs per family and role (DESIGN §1.4). Anthropic IDs and prices are from the
+# Claude API reference as cached 2026-10-06; OpenAI IDs and prices from
+# developers.openai.com/api/docs/pricing, read 2026-10-28. `northstar models check`
+# confirms what the user's keys can reach. A role with no model, or a model with no
+# price, refuses live calls.
+[models.anthropic]
+answerer = "claude-opus-5-5"
+judge = "claude-opus-5-5"
+worker = "claude-opus-5-5"
+worker_small = "claude-haiku-5-5"
+checker = "claude-opus-5-5"
+sim_user = "claude-opus-5-5"
+
+[models.openai]
+answerer = "gpt-6-astra"     # the user's main ChatGPT model ("Opus or Astra", GOAL §1, 2026-10-15)
+judge = "gpt-6.1-sol"        # kept only if it passes the judge test (false accepts < 10%); else gpt-6-astra
+worker = "gpt-6.1-sol"
+worker_small = "gpt-6-luna"
+checker = "gpt-6.1-sol"
+sim_user = "gpt-6.1-sol"
+
+# US dollars per million tokens. cache_write is a multiplier on the input price.
+[prices.claude-opus-5-5]
+input = 4.00
+output = 20.00
+cache_read = 0.20
+cache_write_multiplier = 1.25
+
+[prices.claude-sonnet-5-5]
+input = 2.00
+output = 10.00
+cache_read = 0.20
+cache_write_multiplier = 1.25
+
+[prices.claude-haiku-5-5]
+# Prompts up to 100K tokens; beyond that $0.50 in and $2.50 out (long_*).
+input = 0.10
+output = 0.50
+cache_read = 0.01              # estimate (10% of input); not in the cached reference
+cache_write_multiplier = 1.25
+long_threshold_tokens = 100000
+long_input = 0.50
+long_output = 2.50
+
+# OpenAI: cached input is an absolute price; no separate cache-write charge.
+[prices.gpt-6-astra]
+input = 10.00
+output = 50.00
+cache_read = 1.00
+cache_write_multiplier = 1.0
+long_threshold_tokens = 272000
+long_input = 20.00
+long_output = 75.00
+long_cache_read = 2.00
+
+[prices."gpt-6.1-sol"]
+input = 2.00
+output = 10.00
+cache_read = 0.10
+cache_write_multiplier = 1.0
+long_threshold_tokens = 272000
+long_input = 4.00
+long_output = 15.00
+long_cache_read = 0.20
+
+[prices."gpt-6.1-terra"]
+input = 1.00
+output = 5.00
+cache_read = 0.05
+cache_write_multiplier = 1.0
+long_threshold_tokens = 272000
+long_input = 2.00
+long_output = 7.50
+long_cache_read = 0.10
+
+[prices.gpt-6-luna]
+input = 0.10
+output = 0.50
+cache_read = 0.01
+cache_write_multiplier = 1.0
+long_threshold_tokens = 272000
+long_input = 0.20
+long_output = 0.75
+long_cache_read = 0.02
+
+# How hidden sub-tasks reach the models (DESIGN §1.4, revised 2026-10-29): "harness" runs
+# Claude Code and Codex headless on the user's own plans, with no separate bill; "api" uses
+# the vendors' APIs and the user's keys, metered in dollars against [budget].
+[route]
+default = "harness"
+
+[harness]
+# Empty means: look on PATH, then inside the desktop apps (Claude.app's bundled Claude Code,
+# ChatGPT.app's bundled Codex). Runs start in an empty folder under the data root, with hooks
+# off, no tools and no saved transcript, so they are never captured as the user's sessions (I24).
+claude_binary = ""
+codex_binary = ""
+timeout_s = 600
+
+[budget]
+# Monthly caps in US dollars. 0 means not set: live calls are refused until the user
+# sets a cap (DESIGN §9 suggests a soft $80 and a hard $120).
+monthly_soft_usd = 0
+monthly_hard_usd = 0
+# A single evaluation run stops when it would pass this, unless the run sets its own.
+run_default_usd = 5.0
+
+# DESIGN §8 starting values, fixed before the data they judge.
+[eval]
+token_budget = 8000            # the context budget every system gets (note 09 §2)
+judge_false_accept_max = 0.10  # a judge counts only below this on wrong but on-topic answers
+judge_batch_size = 8           # answers the QA judge grades in one call (Codex adds ~10K tokens a call; DESIGN §1.4)
+lme_margin_points = 10         # Northstar must beat B1 and B2 by this on updates and time
+seed = 20261028                # fixed seed for subset selection and splits
+
+[eval.longmemeval]
+# Question types used, and how many of each per split (DESIGN §8, "Held-out sizes").
+# LongMemEval_S holds 72 knowledge-update, 127 temporal, 121 multi-session and 64
+# single-session-user answerable questions, and 30 abstention ("_abs") questions.
+# The held-out sizes let the pooled 10-point bar on knowledge update and temporal
+# reasoning be met or failed; B0 runs on a reference subset only.
+types = ["knowledge-update", "temporal-reasoning", "multi-session", "single-session-user"]
+per_type_dev = 10
+abstention_dev = 10
+abstention_test = 20
+b0_test_per_type = 10
+
+[eval.longmemeval.per_type_test]
+knowledge-update = 62
+temporal-reasoning = 60
+multi-session = 30
+single-session-user = 30

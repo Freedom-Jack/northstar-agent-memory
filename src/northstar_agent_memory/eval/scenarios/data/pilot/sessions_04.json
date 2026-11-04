@@ -1,0 +1,80 @@
+[
+  {
+    "id": "s19", "kind": "work", "app": "codex", "model_family": "openai", "project": "hearth",
+    "title": "Weekly export script", "started_at": "2026-01-25T16:00:00+00:00",
+    "messages": [
+      ["user", "want a script that exports last weeks readings to csv so i can look at them in a spreadsheet"],
+      ["assistant", "I can write export_week.py using the Influx client: query the last 7 days for each sensor and write one CSV per sensor. Should it be a script, or part of the Rust bridge?"],
+      ["user", "python, its a script, it runs once a week from cron. scripts are always python for me. the bridge stays rust obviously"],
+      ["assistant", "Written: scripts/export_week.py, plus a cron line that runs it on Sundays at 18:00."],
+      ["user", "if i had the money id put smart valves on every radiator and get a heat pump, then hearth would be proper. but renting, so no"],
+      ["assistant", "In a rented flat the sensible route is what you are doing: room sensors and a schedule on the existing boiler, with nothing fixed to the building."],
+      ["user", "yeah. fine for now"]
+    ]
+  },
+  {
+    "id": "s20", "kind": "work", "app": "claude-code", "model_family": "anthropic", "project": "atlas",
+    "title": "How the notifier gets its events", "started_at": "2026-01-26T11:00:00+00:00",
+    "messages": [
+      ["user", "need to decide how notifier gets events from ingest now that its going in the monolith. options?"],
+      ["assistant", "Three options. 1) A Postgres table used as a queue, polled with SELECT ... FOR UPDATE SKIP LOCKED. 2) RabbitMQ as a separate broker. 3) Postgres LISTEN/NOTIFY to wake the notifier when rows arrive. The table is the simplest and durable; RabbitMQ gives more features at the cost of another service; LISTEN/NOTIFY is fast but does not store anything."],
+      ["user", "rabbit is another thing to run and monitor, no. listen/notify looses messages if the listener is down, which is exactly what bit us. polling table with skip locked. simple, durable, we already have postgres"],
+      ["assistant", "Agreed. I will add an outbox table, and a notifier worker that claims rows with SKIP LOCKED and marks them done. Poll every 5 seconds to start."],
+      ["user", "5s ok to start. if people complain we can lower it"],
+      ["assistant", "Implemented with tests, including two workers claiming rows at the same time."],
+      ["user", "great. so decision made: polling outbox table. rabbitmq out, listen/notify out"],
+      ["assistant", "Recorded in the repository's decision log, with the three options and why two were rejected."],
+      ["user", "nice, future me will thank you"]
+    ]
+  },
+  {
+    "id": "s21", "kind": "chat", "app": "chatgpt", "model_family": "openai", "project": null,
+    "title": "Rust course, lesson 4", "started_at": "2026-01-27T19:45:00+00:00",
+    "messages": [
+      ["user", "lesson 4 is the async one lol. ironic. i skipped half of it, it just made me annoyed"],
+      ["assistant", "That is fine. Async is the part you can come back to once the ownership material feels solid. You do not need it for the small programs in the course."],
+      ["user", "honestly im slipping. i might skip next weeks lesson, work is busy and the dog takes my evenings now"],
+      ["assistant", "Pausing for a week is okay. It is easier to pick the course back up than to push through while tired."],
+      ["user", "ill see. alex m says hell send me his notes"]
+    ]
+  },
+  {
+    "id": "s22", "kind": "work", "app": "claude-code", "model_family": "anthropic", "project": "atlas",
+    "title": "Dropping the cache", "started_at": "2026-01-29T09:30:00+00:00",
+    "messages": [
+      ["user", "i think we should drop the cache layer in atlas. it caused the stale tracking bug last week"],
+      ["assistant", "Dropping the cache layer means removing the response cache middleware, the carrier-code lookup cache and the invalidation hooks in ingest. That removes all caching from Atlas. Proceed?"],
+      ["user", "no, thats not what i meant. only the per request response cache goes. the carrier code lookup cache stays, it saves us a db hit on every event"],
+      ["assistant", "Understood. I will remove only the per-request response cache middleware and its invalidation hooks. The carrier-code lookup cache stays, so ingest still uses it for every event."],
+      ["user", "yes. and add a note to the readme saying why: stale reads"],
+      ["assistant", "Done. The README now says the response cache was removed in January because of stale tracking reads, and that the carrier-code cache remains."],
+      ["user", "perfect. im out this afternoon for an appointment, back friday"]
+    ]
+  },
+  {
+    "id": "s23", "kind": "chat", "app": "claude.ai", "model_family": "anthropic", "project": null,
+    "title": "Dropping the 10k", "started_at": "2026-01-30T18:30:00+00:00",
+    "messages": [
+      ["user", "ok im calling it. im scrapping the 10k. the dog walks eat my evenings, its dark, and im behind on everything. ill skip it this year"],
+      ["assistant", "That is a reasonable call. Dropping a goal on purpose is different from failing at it, and you can pick running up again whenever it suits you."],
+      ["user", "yeah no guilt. different thing: how long should a greyhound walk be? biscuit seems fine with 30 mins but pulls toward every squirrel"],
+      ["assistant", "Thirty to forty-five minutes twice a day is typical. A well-fitted harness gives you more control than a collar for a dog with a narrow head."],
+      ["user", "harness, yep, ordered one. thanks"],
+      ["assistant", "Good. Let him sniff around the harness before the first walk so it is not strange to him."],
+      ["user", "he is the world's most suspicious dog about anything new, so yes"]
+    ]
+  },
+  {
+    "id": "s24", "kind": "chat", "app": "claude.ai", "model_family": "anthropic", "project": null,
+    "title": "A flat in Bath", "started_at": "2026-01-31T10:00:00+00:00",
+    "messages": [
+      ["user", "big news, ive signed for a flat in bath. moving on saturday 7 feb. more space, a garden for biscuit"],
+      ["assistant", "Congratulations. A short moving checklist: change your address with the bank and your employer, book broadband to start on the day, redirect your post, and register Biscuit's new address with the chip database."],
+      ["user", "the lease is 12 months. ill still work out of the bristol office so its a train in, about 40 mins"],
+      ["assistant", "Forty minutes by train is a comfortable commute. A season ticket is usually cheaper than day returns if you go in three or more days a week."],
+      ["user", "yep. also the platform team thing at work, still going back and forth. ill think about it after the move"],
+      ["assistant", "That is a sensible order. Big decisions are easier once the move is out of the way."],
+      ["user", "packing tonight. gn"]
+    ]
+  }
+]

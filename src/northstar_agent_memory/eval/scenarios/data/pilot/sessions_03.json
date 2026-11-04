@@ -1,0 +1,74 @@
+[
+  {
+    "id": "s14", "kind": "chat", "app": "claude.ai", "model_family": "anthropic", "project": null,
+    "title": "The 10k and winter shoes", "started_at": "2026-01-19T19:00:00+00:00",
+    "messages": [
+      ["user", "so i havent run in 11 days. cold, dark, work. the 10k plan has kind of stalled"],
+      ["assistant", "Eleven days is not fatal. Restart with a short easy run, not by catching up on what you missed. Your fitness will be mostly there."],
+      ["user", "yeah maybe. i do still want to do the 10k on the 15th of march, just not sure how to get going again"],
+      ["assistant", "Two short runs this week, 20 minutes easy, and treat the weeks after as if the plan starts again from week 2."],
+      ["user", "ok. unrelated, can you recommend winter running shoes, my old ones leak"],
+      ["assistant", "Look for trail-style shoes with a waterproof membrane and a bit of cushioning. They are heavier, but dry feet matter more in January."],
+      ["user", "waterproof trail ones, noted. ill look at some on saturday"]
+    ]
+  },
+  {
+    "id": "s15", "kind": "chat", "app": "chatgpt", "model_family": "openai", "project": null,
+    "title": "Rust course, lesson 3", "started_at": "2026-01-20T19:30:00+00:00",
+    "messages": [
+      ["user", "lifetimes. i think they are going to be the death of me. lesson 3 took 3 hours and i still half dont get it"],
+      ["assistant", "Lifetimes describe how long references are valid relative to each other. They do not change how long values live. Most of the time elision handles them for you, and you only write them out when the compiler asks."],
+      ["user", "the course notes say use async everywhere for services, threads are legacy. alex m agrees. i dont think thats right for something small like hearthd, a couple of blocking threads is fine and way simpler"],
+      ["assistant", "Both can be reasonable. Async scales to many concurrent connections. For a bridge with one broker connection and one relay, threads are simpler and easier to debug."],
+      ["user", "right. so the course says async everywhere and i say threads for the small stuff. im in the minority on the course chat, everyone else is team async"],
+      ["assistant", "Being in the minority does not make it wrong, but you would want to measure it on hearthd rather than argue it in the abstract."],
+      ["user", "yeah. anyway still behind on the exercises, alex m is helping on thursday"]
+    ]
+  },
+  {
+    "id": "s16", "kind": "work", "app": "claude-code", "model_family": "anthropic", "project": "atlas",
+    "title": "Ingest outage", "started_at": "2026-01-21T15:20:00+00:00",
+    "messages": [
+      ["user", "prod is down. ingest stopped accepting events about 20 mins ago"],
+      ["assistant", "Ingest is rejecting events with a schema error. The notifier deploy at 14:52 renamed a column in the shared shipments table, and ingest still writes the old name. Roll back the notifier migration?"],
+      ["user", "yes roll it back now"],
+      ["assistant", "Rolled back the migration at 15:31. Ingest is accepting events again. Carriers queued 18 minutes of events and they are being replayed."],
+      ["user", "ok. breathe. so the 3 service split bit us before we even finished it. notifier and ingest were already separate deploys sharing one db"],
+      ["assistant", "Yes. The services were separate deployments but not independent, because they share a schema. That is the usual way an early split fails."],
+      ["user", "i was wrong. i was pushing for small services and honestly i think we should do a modular monolith first: one deploy, clear module boundaries, split later only if a module needs to scale on its own. 4 engineers cant run 3 services"],
+      ["assistant", "A modular monolith with enforced module boundaries gets most of the benefit. I can draft the module layout and an import-boundary check so that modules cannot reach into each other's tables."],
+      ["user", "do that tomorrow. i need coffee"],
+      ["assistant", "Understood. I will start on the module layout tomorrow. Get some rest after that outage."],
+      ["user", "ha. 18 mins of downtime and imogen was very calm about it, which was worse"]
+    ]
+  },
+  {
+    "id": "s17", "kind": "work", "app": "claude-code", "model_family": "anthropic", "project": "atlas",
+    "title": "Module layout and a Kafka argument", "started_at": "2026-01-22T10:15:00+00:00",
+    "messages": [
+      ["user", "morning. module layout draft?"],
+      ["assistant", "Draft: atlas/ingest, atlas/notifier, atlas/api and atlas/core, each with its own models and one public interface module. A test checks that no module imports another module's internals or touches its tables."],
+      ["user", "good. ok devils advocate time, i want to stress test the plan. argue for kafka between ingest and notifier. i dont think we need it, i just want to hear the best case"],
+      ["assistant", "The best case for Kafka: a durable ordered log, replay for free, independent consumers and back pressure. If event volume grows a hundred times, or many consumers appear, it pays off."],
+      ["user", "ok thats a decent case. still no. we do maybe 40k events a day, a table is fine"],
+      ["assistant", "At 40k events a day a Postgres table handles it comfortably."],
+      ["user", "yup. ok lets make the import check a ci step"],
+      ["assistant", "Added an import-linter config and a CI step that fails on cross-module imports."]
+    ]
+  },
+  {
+    "id": "s18", "kind": "chat", "app": "claude.ai", "model_family": "anthropic", "project": null,
+    "title": "A greyhound called Biscuit", "started_at": "2026-01-24T12:30:00+00:00",
+    "messages": [
+      ["user", "i got a dog!! picked him up this morning from the rescue. biscuit, 4 year old greyhound, retired racer"],
+      ["assistant", "Congratulations. Retired greyhounds are usually calm indoors, but they need short walks, a soft bed, and a slow introduction to stairs and glass doors."],
+      ["user", "he needs a walk at 7am and about 5pm, and cant be left more than 4 hours at first"],
+      ["assistant", "That is typical for a new rescue. The routine will help him settle, and the four-hour limit usually stretches after a few weeks."],
+      ["user", "ok good. so now im thinking about the morocco trip, i cant just leave him. ill need a dog sitter for the 5 days in april. jo says kennels are a no for a greyhound"],
+      ["assistant", "A sitter who stays at your home is the best option for a greyhound, and for 5 days in April it is worth booking early."],
+      ["user", "ill ask my sister, she owes me one. flights: bristol to marrakech return is around 180 pounds, so thats a quarter of the budget"],
+      ["assistant", "That leaves about 520 pounds for the guide, guesthouses and food, which is workable for 5 days."],
+      ["user", "ok. ill book once the sitter is sorted"]
+    ]
+  }
+]

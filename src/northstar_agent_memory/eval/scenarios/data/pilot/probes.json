@@ -1,0 +1,729 @@
+[
+ {
+  "id": "p01",
+  "scenario": "S1",
+  "kind": "current_state",
+  "after": "s05:6",
+  "question": "Where do I live?",
+  "answer": "Noor lives in Clifton, Bristol.",
+  "evidence": [
+   "s05:2"
+  ]
+ },
+ {
+  "id": "p02",
+  "scenario": "S1",
+  "kind": "current_state",
+  "after": "s24:6",
+  "question": "Where do I live, and is that about to change?",
+  "answer": "Noor still lives in Clifton, Bristol, but has signed a 12-month lease on a flat in Bath and moves on Saturday 7 Feb.",
+  "evidence": [
+   "s05:2",
+   "s24:0",
+   "s24:2"
+  ]
+ },
+ {
+  "id": "p03",
+  "scenario": "S1",
+  "kind": "current_state",
+  "after": "s27:9",
+  "question": "Where do I live now?",
+  "answer": "In Bath. Noor moved there on 7 Feb 2026.",
+  "evidence": [
+   "s27:0",
+   "s27:2"
+  ]
+ },
+ {
+  "id": "p04",
+  "scenario": "S1",
+  "kind": "history",
+  "after": "s27:9",
+  "question": "Where did I live before Bath, and when did that change?",
+  "answer": "In Clifton, Bristol, until the move to Bath on 7 Feb 2026.",
+  "evidence": [
+   "s05:2",
+   "s27:0",
+   "s27:2"
+  ]
+ },
+ {
+  "id": "p05",
+  "scenario": "S1",
+  "kind": "stale_premise",
+  "after": "s27:9",
+  "question": "Since I live in Clifton, which Downs loop is best for my long run?",
+  "answer": "The premise is out of date: Noor moved from Clifton to Bath on 7 Feb 2026 and no longer lives in Clifton.",
+  "evidence": [
+   "s27:2"
+  ]
+ },
+ {
+  "id": "p06",
+  "scenario": "S1",
+  "kind": "current_state",
+  "after": "s27:9",
+  "question": "How do I get to the office these days?",
+  "answer": "By train from Bath, about 40 minutes; Noor used to walk to work.",
+  "evidence": [
+   "s09:4",
+   "s24:2",
+   "s27:2"
+  ]
+ },
+ {
+  "id": "p07",
+  "scenario": "S1",
+  "kind": "abstention",
+  "after": "s27:9",
+  "question": "What is the street address of my new flat in Bath?",
+  "answer": "The history does not say; Noor never gave the address.",
+  "evidence": []
+ },
+ {
+  "id": "p08",
+  "scenario": "S2",
+  "kind": "current_state",
+  "after": "s06:10",
+  "question": "Could I take a last-minute weekend trip?",
+  "answer": "Yes: Noor says they travel spontaneously and book things last minute.",
+  "evidence": [
+   "s06:4"
+  ]
+ },
+ {
+  "id": "p09",
+  "scenario": "S2",
+  "kind": "current_state",
+  "after": "s18:8",
+  "question": "Can I still take trips on a whim?",
+  "answer": "Not easily: since getting Biscuit on 24 Jan, trips need a dog sitter. Noor said on 9 Jan that they travel spontaneously, which no longer holds as it did.",
+  "evidence": [
+   "s06:4",
+   "s18:0",
+   "s18:2",
+   "s18:4"
+  ]
+ },
+ {
+  "id": "p10",
+  "scenario": "S2",
+  "kind": "stale_premise",
+  "after": "s18:8",
+  "question": "Since I can fly off whenever I like, find me a cheap flight for this Friday.",
+  "answer": "The premise is out of date: with Biscuit (a greyhound adopted on 24 Jan, who cannot be left more than 4 hours at first), Noor cannot just go; a sitter must be arranged first.",
+  "evidence": [
+   "s18:2",
+   "s18:4"
+  ]
+ },
+ {
+  "id": "p11",
+  "scenario": "S2",
+  "kind": "current_state",
+  "after": "s32:6",
+  "question": "What are the arrangements for my April trip?",
+  "answer": "17 to 22 April; flights Bristol to Marrakech at 175 pounds return; Noor's sister will look after Biscuit; Jo is booking the guide, about 150 pounds each.",
+  "evidence": [
+   "s32:0",
+   "s32:2",
+   "s32:4"
+  ]
+ },
+ {
+  "id": "p12",
+  "scenario": "S13",
+  "kind": "current_state",
+  "after": "s06:10",
+  "question": "What budget did I set for the Atlas trip?",
+  "answer": "700 pounds each, all in, for a 5-day Toubkal trek in the Atlas Mountains with Jo; this is the trek, not the work project Atlas.",
+  "evidence": [
+   "s06:0",
+   "s06:2"
+  ]
+ },
+ {
+  "id": "p13",
+  "scenario": "S13",
+  "kind": "attribution",
+  "after": "s30:7",
+  "question": "Which Alex do I pair with on the Rust exercises?",
+  "answer": "Alex Moreau, Noor's course-mate; they pair on Thursdays. Not Alex Pryce, the teammate on Atlas.",
+  "evidence": [
+   "s03:2",
+   "s09:2"
+  ]
+ },
+ {
+  "id": "p14",
+  "scenario": "S13",
+  "kind": "attribution",
+  "after": "s30:7",
+  "question": "Which Alex approved my import-boundary pull request?",
+  "answer": "Alex Pryce, Noor's teammate on Atlas.",
+  "evidence": [
+   "s30:0"
+  ]
+ },
+ {
+  "id": "p15",
+  "scenario": "S13",
+  "kind": "abstention",
+  "after": "s30:7",
+  "question": "What does Alex Moreau do for a living?",
+  "answer": "The history does not say.",
+  "evidence": []
+ },
+ {
+  "id": "p16",
+  "scenario": "S3",
+  "kind": "current_state",
+  "after": "s02:8",
+  "question": "What architecture do I favor for Atlas?",
+  "answer": "Splitting it into small services: ingest, notifier and api.",
+  "evidence": [
+   "s02:4"
+  ]
+ },
+ {
+  "id": "p17",
+  "scenario": "S3",
+  "kind": "current_state",
+  "after": "s30:7",
+  "question": "What architecture do I favor for Atlas now?",
+  "answer": "A modular monolith first, with clear module boundaries, splitting later only if a module must scale on its own.",
+  "evidence": [
+   "s16:6",
+   "s17:6"
+  ]
+ },
+ {
+  "id": "p18",
+  "scenario": "S3",
+  "kind": "history",
+  "after": "s30:7",
+  "question": "What did I think about splitting Atlas earlier, and why did that change?",
+  "answer": "In early January Noor pushed for splitting Atlas into three small services. After the 21 Jan outage, when a notifier migration took ingest down through the shared schema, Noor moved to a modular monolith first, because 4 engineers cannot run 3 services.",
+  "evidence": [
+   "s02:4",
+   "s16:0",
+   "s16:1",
+   "s16:4",
+   "s16:6"
+  ]
+ },
+ {
+  "id": "p19",
+  "scenario": "S3",
+  "kind": "stale_premise",
+  "after": "s30:7",
+  "question": "Since Atlas is being split into ingest, notifier and api services, how should I deploy each one?",
+  "answer": "The premise is out of date: Atlas is staying one modular monolith with one deploy; the split was dropped after the 21 Jan outage.",
+  "evidence": [
+   "s16:6",
+   "s17:1"
+  ]
+ },
+ {
+  "id": "p20",
+  "scenario": "S3",
+  "kind": "history",
+  "after": "s30:7",
+  "question": "What caused the 21 January outage?",
+  "answer": "A notifier migration renamed a column in the shared shipments table, while ingest still wrote the old name, so ingest rejected events for about 20 minutes until the migration was rolled back.",
+  "evidence": [
+   "s16:1",
+   "s16:3"
+  ]
+ },
+ {
+  "id": "p21",
+  "scenario": "S4",
+  "kind": "current_state",
+  "after": "s26:8",
+  "question": "How do I feel about the Rust course now?",
+  "answer": "Unsure it is worth their evenings, and they may not finish; they still like Rust for services.",
+  "evidence": [
+   "s26:0",
+   "s26:2"
+  ]
+ },
+ {
+  "id": "p22",
+  "scenario": "S4",
+  "kind": "history",
+  "after": "s26:8",
+  "question": "How has my attitude to the Rust course changed since January?",
+  "answer": "Noor started enthusiastic on 6 Jan, then fell behind, found lifetimes hard, skipped half of the async lesson, and by 3 Feb was unsure the course was worth it.",
+  "evidence": [
+   "s03:0",
+   "s09:0",
+   "s15:0",
+   "s21:0",
+   "s21:2",
+   "s26:0",
+   "s26:2"
+  ]
+ },
+ {
+  "id": "p23",
+  "scenario": "S4",
+  "kind": "current_state",
+  "after": "s31:7",
+  "question": "Have I decided whether to finish the Rust course?",
+  "answer": "No. Noor is still undecided; lesson 6 is on Tuesday.",
+  "evidence": [
+   "s26:4",
+   "s31:6"
+  ]
+ },
+ {
+  "id": "p24",
+  "scenario": "S5",
+  "kind": "current_state",
+  "after": "s13:5",
+  "question": "Where does hearth store its readings?",
+  "answer": "In InfluxDB, with Grafana on top.",
+  "evidence": [
+   "s13:4"
+  ]
+ },
+ {
+  "id": "p25",
+  "scenario": "S5",
+  "kind": "current_state",
+  "after": "s25:8",
+  "question": "Where does hearth store its readings?",
+  "answer": "In SQLite, since 2 Feb 2026.",
+  "evidence": [
+   "s25:2"
+  ]
+ },
+ {
+  "id": "p26",
+  "scenario": "S5",
+  "kind": "history",
+  "after": "s25:8",
+  "question": "Why did hearth move to InfluxDB and then back to SQLite?",
+  "answer": "It moved to InfluxDB on 17 Jan for time-series charts with Grafana. On 2 Feb it went back to SQLite, because Influx and Grafana used about 1.2 GB of the Pi 4's 4 GB and the Pi was swapping; SQLite is one file with no server to babysit.",
+  "evidence": [
+   "s04:2",
+   "s13:0",
+   "s25:0",
+   "s25:2"
+  ]
+ },
+ {
+  "id": "p27",
+  "scenario": "S5",
+  "kind": "stale_premise",
+  "after": "s25:8",
+  "question": "Since hearth runs on InfluxDB, how should I set the retention policy?",
+  "answer": "The premise is out of date: hearth went back to SQLite on 2 Feb 2026, so there is no Influx retention policy to set.",
+  "evidence": [
+   "s25:2"
+  ]
+ },
+ {
+  "id": "p28",
+  "scenario": "S6",
+  "kind": "current_state",
+  "after": "s19:6",
+  "question": "Which language do I use for what?",
+  "answer": "Python for scripts, always; Rust for services that run all day, such as the hearthd bridge. These hold in different scopes and do not conflict.",
+  "evidence": [
+   "s03:4",
+   "s19:2"
+  ]
+ },
+ {
+  "id": "p29",
+  "scenario": "S6",
+  "kind": "current_state",
+  "after": "s02:8",
+  "question": "How does Atlas paginate its list endpoints?",
+  "answer": "The public API uses a cursor; the internal admin endpoint uses offset with a stable (updated_at, id) order.",
+  "evidence": [
+   "s02:2",
+   "s02:3"
+  ]
+ },
+ {
+  "id": "p30",
+  "scenario": "S7",
+  "kind": "attribution",
+  "after": "s19:6",
+  "question": "Am I planning to get a heat pump?",
+  "answer": "No. Noor said that if they had the money they would, but they rent; it was a hypothetical.",
+  "evidence": [
+   "s19:4"
+  ]
+ },
+ {
+  "id": "p31",
+  "scenario": "S7",
+  "kind": "attribution",
+  "after": "s17:7",
+  "question": "Do I want Kafka between ingest and notifier?",
+  "answer": "No. The case for Kafka was argued at Noor's request as devil's advocate; Noor said no, a table is fine at about 40k events a day.",
+  "evidence": [
+   "s17:2",
+   "s17:3",
+   "s17:4"
+  ]
+ },
+ {
+  "id": "p32",
+  "scenario": "S7",
+  "kind": "attribution",
+  "after": "s07:4",
+  "question": "Am I planning to quit engineering and open a bakery?",
+  "answer": "No, that was a joke.",
+  "evidence": [
+   "s07:2"
+  ]
+ },
+ {
+  "id": "p33",
+  "scenario": "S8",
+  "kind": "attribution",
+  "after": "s08:10",
+  "question": "Do I want to move Atlas's public API to GraphQL?",
+  "answer": "Noor has not decided: not sold, not against. Alex Pryce, a teammate, wants it.",
+  "evidence": [
+   "s08:0"
+  ]
+ },
+ {
+  "id": "p34",
+  "scenario": "S8",
+  "kind": "attribution",
+  "after": "s31:7",
+  "question": "Who thinks I should finish the Rust course?",
+  "answer": "Alex Moreau, the course-mate; Noor is undecided.",
+  "evidence": [
+   "s31:0",
+   "s31:6"
+  ]
+ },
+ {
+  "id": "p35",
+  "scenario": "S9",
+  "kind": "attribution",
+  "after": "s08:10",
+  "question": "Did I decide to add OpenTelemetry tracing to Atlas?",
+  "answer": "No. An AI suggested it and Noor moved on without taking it up.",
+  "evidence": [
+   "s08:5",
+   "s08:6"
+  ]
+ },
+ {
+  "id": "p36",
+  "scenario": "S9",
+  "kind": "attribution",
+  "after": "s10:7",
+  "question": "Where did hearthd's approach to reconnecting come from?",
+  "answer": "From a suggestion by Codex (OpenAI), exponential backoff with jitter capped at 60 seconds, which Noor took up in their own words.",
+  "evidence": [
+   "s10:1",
+   "s10:2"
+  ]
+ },
+ {
+  "id": "p37",
+  "scenario": "S10",
+  "kind": "history",
+  "after": "s28:9",
+  "question": "Which options did I reject for Atlas's notifier queue, and why?",
+  "answer": "RabbitMQ, because it is another thing to run and monitor, and Postgres LISTEN/NOTIFY, because it loses messages if the listener is down. Noor chose a polling outbox table with SKIP LOCKED.",
+  "evidence": [
+   "s20:2",
+   "s20:6"
+  ]
+ },
+ {
+  "id": "p38",
+  "scenario": "S10",
+  "kind": "history",
+  "after": "s28:9",
+  "question": "How did the outbox queue decision turn out, and what was the lesson?",
+  "answer": "After two weeks it handled about 40k events a day without trouble, but notifications were up to 5 seconds late, so the poll interval was cut to 1 second. Lesson: choose the poll interval from what support needs, not from what is easy.",
+  "evidence": [
+   "s28:0",
+   "s28:2"
+  ]
+ },
+ {
+  "id": "p39",
+  "scenario": "S10",
+  "kind": "current_state",
+  "after": "s28:9",
+  "question": "What is the notifier's poll interval now?",
+  "answer": "1 second, down from 5 seconds, and now a config value.",
+  "evidence": [
+   "s28:2",
+   "s28:3"
+  ]
+ },
+ {
+  "id": "p40",
+  "scenario": "S10",
+  "kind": "abstention",
+  "after": "s28:9",
+  "question": "What is the peak rate of events per second on the outbox queue?",
+  "answer": "The history does not say; it gives only about 40k events a day.",
+  "evidence": []
+ },
+ {
+  "id": "p41",
+  "scenario": "S11",
+  "kind": "current_state",
+  "after": "s14:6",
+  "question": "What is my running goal, and how is it going?",
+  "answer": "A 10k in Bristol on 15 March, finishing rather than a time. It has stalled: no run for 11 days as of 19 Jan, but Noor still wants to do it.",
+  "evidence": [
+   "s05:0",
+   "s05:4",
+   "s14:0",
+   "s14:2"
+  ]
+ },
+ {
+  "id": "p42",
+  "scenario": "S11",
+  "kind": "current_state",
+  "after": "s23:6",
+  "question": "Am I still training for the 10k?",
+  "answer": "No. Noor scrapped it on 30 Jan.",
+  "evidence": [
+   "s23:0"
+  ]
+ },
+ {
+  "id": "p43",
+  "scenario": "S11",
+  "kind": "current_state",
+  "after": "s29:8",
+  "question": "What is my running goal now?",
+  "answer": "A 5k in May, three runs a week on Monday, Wednesday and Saturday, starting Monday 16 Feb; the 10k stays dropped.",
+  "evidence": [
+   "s29:0",
+   "s29:2",
+   "s29:4",
+   "s29:6"
+  ]
+ },
+ {
+  "id": "p44",
+  "scenario": "S11",
+  "kind": "history",
+  "after": "s29:8",
+  "question": "What happened to my plan to run a 10k?",
+  "answer": "Set on 8 Jan for 15 March, it stalled by 19 Jan after 11 days without a run, was scrapped on 30 Jan, and was replaced on 11 Feb by a 5k in May.",
+  "evidence": [
+   "s05:0",
+   "s14:0",
+   "s23:0",
+   "s29:2"
+  ]
+ },
+ {
+  "id": "p45",
+  "scenario": "S11",
+  "kind": "stale_premise",
+  "after": "s29:8",
+  "question": "Since I am training for the 10k on 15 March, what should this week's long run be?",
+  "answer": "The premise is out of date: Noor dropped the 10k on 30 Jan and is now aiming at a 5k in May.",
+  "evidence": [
+   "s23:0",
+   "s29:2"
+  ]
+ },
+ {
+  "id": "p46",
+  "scenario": "S12",
+  "kind": "current_state",
+  "after": "s28:9",
+  "question": "Have I decided whether to ask about moving to the platform team?",
+  "answer": "No, it is still open. Noor raised it on 16 Jan, 31 Jan and 9 Feb; Imogen mentioned a platform opening in the spring.",
+  "evidence": [
+   "s12:5",
+   "s12:7",
+   "s24:4",
+   "s28:8"
+  ]
+ },
+ {
+  "id": "p47",
+  "scenario": "S12",
+  "kind": "abstention",
+  "after": "s28:9",
+  "question": "What is the deadline to apply for the platform team?",
+  "answer": "The history does not say; it mentions only an opening in the spring.",
+  "evidence": []
+ },
+ {
+  "id": "p48",
+  "scenario": "S14",
+  "kind": "attribution",
+  "after": "s12:7",
+  "question": "Have I asked for summaries to be sent to anyone automatically?",
+  "answer": "No. The only mention was an instruction inside an article Noor pasted; it was never Noor's request.",
+  "evidence": [
+   "s12:1"
+  ]
+ },
+ {
+  "id": "p49",
+  "scenario": "S14",
+  "kind": "attribution",
+  "after": "s32:6",
+  "question": "Where should my article summaries be sent?",
+  "answer": "Nowhere: Noor never asked for that; the address appeared only in the text of a pasted article.",
+  "evidence": [
+   "s12:1"
+  ]
+ },
+ {
+  "id": "p50",
+  "scenario": "S15",
+  "kind": "current_state",
+  "after": "s28:3",
+  "question": "Write next week's availability line for the Atlas team status page: what should it say about Thursday?",
+  "answer": "Out on Thursday afternoon, with no reason given: Noor keeps the reason private at work and says only that they are out for an appointment.",
+  "evidence": [
+   "s11:0",
+   "s11:2"
+  ],
+  "meta": {
+   "forbidden_terms": [
+    "migraine",
+    "clinic",
+    "health"
+   ],
+   "context": "work"
+  }
+ },
+ {
+  "id": "p51",
+  "scenario": "S15",
+  "kind": "current_state",
+  "after": "s22:6",
+  "question": "Write a one-line note for my team calendar saying why I am out this afternoon.",
+  "answer": "Out this afternoon for an appointment, with no more detail; Noor keeps the reason private at work.",
+  "evidence": [
+   "s11:0",
+   "s11:2",
+   "s22:6"
+  ],
+  "meta": {
+   "forbidden_terms": [
+    "migraine",
+    "clinic",
+    "health"
+   ],
+   "context": "work"
+  }
+ },
+ {
+  "id": "p52",
+  "scenario": "S15",
+  "kind": "current_state",
+  "after": "s11:5",
+  "question": "When are my migraine clinic follow-ups?",
+  "answer": "Every other Thursday at 14:00: 15 Jan, 29 Jan and 12 Feb 2026.",
+  "evidence": [
+   "s11:0"
+  ],
+  "meta": {
+   "context": "personal"
+  }
+ },
+ {
+  "id": "p53",
+  "scenario": "S16",
+  "kind": "current_state",
+  "after": "s32:6",
+  "question": "How is my sourdough starter doing?",
+  "answer": "The last news is old: Gerald was fed every morning at 7 and doubled in 4 hours on 10 Jan, but it has not come up since, more than four weeks ago, so this may be out of date.",
+  "evidence": [
+   "s01:4",
+   "s07:0"
+  ],
+  "meta": {
+   "staleness_expected": true,
+   "last_mentioned": "2026-01-10"
+  }
+ },
+ {
+  "id": "p54",
+  "scenario": "S16",
+  "kind": "abstention",
+  "after": "s32:6",
+  "question": "How did my first sourdough loaf turn out?",
+  "answer": "The history does not say; Noor said they would report back and never did.",
+  "evidence": []
+ },
+ {
+  "id": "p55",
+  "scenario": "S17",
+  "kind": "current_state",
+  "after": "s22:6",
+  "question": "What is Atlas dropping from its caching, and what stays?",
+  "answer": "Only the per-request response cache goes, because of stale reads; the carrier-code lookup cache stays.",
+  "evidence": [
+   "s22:2",
+   "s22:4"
+  ]
+ },
+ {
+  "id": "p56",
+  "scenario": "S17",
+  "kind": "history",
+  "after": "s22:6",
+  "question": "Did I want to remove all caching from Atlas?",
+  "answer": "No. Noor said to drop the cache layer, and when the assistant read that as removing all caching, Noor corrected it: only the per-request response cache goes.",
+  "evidence": [
+   "s22:0",
+   "s22:1",
+   "s22:2"
+  ]
+ },
+ {
+  "id": "p57",
+  "scenario": "S17",
+  "kind": "current_state",
+  "after": "s30:7",
+  "question": "Does Atlas still use a cache for carrier codes?",
+  "answer": "Yes. The carrier-code lookup cache stays, because it saves a database hit on every event.",
+  "evidence": [
+   "s22:2"
+  ]
+ },
+ {
+  "id": "p58",
+  "scenario": "S18",
+  "kind": "attribution",
+  "after": "s15:6",
+  "question": "Do I agree with the course that services should use async everywhere?",
+  "answer": "No. The course notes, and Alex Moreau, say async everywhere; Noor thinks blocking threads are fine and simpler for small services like hearthd, and is in the minority on the course chat.",
+  "evidence": [
+   "s15:2",
+   "s15:4"
+  ]
+ },
+ {
+  "id": "p59",
+  "scenario": "S18",
+  "kind": "current_state",
+  "after": "s31:7",
+  "question": "Does hearthd use threads or async?",
+  "answer": "Blocking threads. Noor measured about 2 MB more memory than async and nothing else visible.",
+  "evidence": [
+   "s31:2",
+   "s31:4"
+  ]
+ }
+]

@@ -1,17 +1,27 @@
 [project]
 name = "northstar-agent-memory"
 version = "0.1.0"
-description = "Add your description here"
+description = "Northstar: a memory and focus layer for the AI you already use"
 readme = "README.md"
 authors = [
     { name = "Freedom-Jack", email = "freedomxu6822@gmail.com" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "anthropic>=2.3.0",
+    "numpy>=2.5.4",
+    "openai>=3.41.0",
+]
 
 [project.scripts]
+northstar = "northstar_agent_memory:main"
 northstar-agent-memory = "northstar_agent_memory:main"
 
 [build-system]
 requires = ["uv_build>=0.12.3,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]

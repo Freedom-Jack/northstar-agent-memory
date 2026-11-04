@@ -1,0 +1,35 @@
+{
+  "id": "pilot",
+  "persona": {
+    "name": "Noor Bellamy",
+    "summary": "An invented backend engineer at a small logistics firm in Bristol (they/them), early 2026. Works on Atlas, the firm's shipment-tracking service. Builds hearth, a home-automation side project on a Raspberry Pi, takes an evening Rust course, plans a trek in the Atlas Mountains with a friend, and chats with AI tools about running, sourdough and everyday life. Six simulated weeks, 5 January to 13 February 2026.",
+    "projects": [
+      {"id": "atlas", "name": "Atlas", "description": "The work shipment-tracking service (Python, FastAPI, Postgres) at Fernleigh Freight. Not the Atlas Mountains trek.", "kind": "work"},
+      {"id": "hearth", "name": "hearth", "description": "A home-automation side project on a Raspberry Pi: sensors, MQTT, a heating schedule, a small Rust bridge service.", "kind": "personal"}
+    ],
+    "traits": [
+      "hedges and typos",
+      "a joke that is not a decision",
+      "a half-retraction",
+      "topic drift inside a chat",
+      "an AI suggestion the user ignores",
+      "an AI suggestion the user adopts in their own words",
+      "a teammate's opinion",
+      "a hypothetical",
+      "a pasted article with an injected instruction",
+      "a mild health disclosure",
+      "two people called Alex and two things called Atlas",
+      "an open question that stays open",
+      "a decision with alternatives and an outcome weeks later",
+      "a goal that stalls, is dropped and revived",
+      "a belief reversed and reversed back",
+      "a scoped view",
+      "a correction"
+    ]
+  },
+  "meta": {
+    "split": "dev",
+    "span": "2026-01-05 to 2026-02-13",
+    "note": "Invented. Nothing here is about a real person."
+  }
+}

@@ -1,0 +1,101 @@
+[
+  {
+    "id": "s01", "kind": "chat", "app": "claude.ai", "model_family": "anthropic", "project": null,
+    "title": "Sourdough starter", "started_at": "2026-01-05T20:12:00+00:00",
+    "messages": [
+      ["user", "ok so my sister gave me a jar of sourdough starter and i have no idea what im doing. i named him gerald. do i just feed him flour??"],
+      ["assistant", "Congratulations on Gerald. Yes, flour and water. Discard most of the starter first, then feed him equal weights of flour and water, about 50 g of each for a small jar. Keep him at room temperature and feed him once a day for now."],
+      ["user", "ha ok. i keep him on the kitchen windowsill, is that too cold? the flat is freezing, boiler is ancient"],
+      ["assistant", "A cold kitchen only slows him down. 20 to 24 C is ideal. Try the oven with just the light on, or the top of the fridge. You will see more bubbles in a warmer spot."],
+      ["user", "oven with the light on, genius. i'll feed him every morning at 7 before work"],
+      ["assistant", "Seven in the morning works. Put a rubber band on the jar at the level of the starter so you can see how far he rises. When he doubles within 4 to 6 hours of a feed, he is ready to bake with."],
+      ["user", "perfect. first loaf this weekend if he behaves"]
+    ]
+  },
+  {
+    "id": "s02", "kind": "work", "app": "claude-code", "model_family": "anthropic", "project": "atlas",
+    "title": "Duplicate rows on the shipment list", "started_at": "2026-01-06T10:05:00+00:00",
+    "messages": [
+      ["user", "tracking list endpoint returns dupes when 2 shipments have the same updated_at. offset pagination i guess. can you look at api/routes/shipments.py"],
+      ["assistant", "Found it. The list query orders by updated_at only, so rows with identical timestamps can swap places between pages. Ordering by (updated_at, id) makes the order stable. I can also move the endpoint to cursor pagination, which avoids the problem entirely. Which do you want?"],
+      ["user", "cursor for the public api, definately. actually no wait, the admin endpoint is internal and only ever has a few hundred rows, offset is fine there. so cursor for public, offset + stable ordering for admin"],
+      ["assistant", "Done. The public list now uses an opaque cursor over (updated_at, id). The admin list keeps offset pagination with the (updated_at, id) ordering. Tests pass, and I added one for two rows with the same timestamp."],
+      ["user", "nice. btw while youre in there, we're splitting atlas into three services next month: ingest, notifier and api. im the one pushing for it, i think small services are the right way to go for this team"],
+      ["assistant", "Understood. If you do split it, the shared database schema will be the first thing to decouple. Want me to sketch the boundaries between ingest, notifier and api?"],
+      ["user", "not today. i'll bring it up in planning. lunch"],
+      ["assistant", "Enjoy lunch. The pagination change is committed on a branch and ready for a pull request."],
+      ["user", "ty, ill open the pr after. the tests are slow on this laptop so dont wait for me"]
+    ]
+  },
+  {
+    "id": "s03", "kind": "chat", "app": "chatgpt", "model_family": "openai", "project": null,
+    "title": "Rust course, lesson 1", "started_at": "2026-01-06T19:40:00+00:00",
+    "messages": [
+      ["user", "just did lesson 1 of the rust for backend engineers course!! ownership already feels weird but i love it"],
+      ["assistant", "Ownership is the big idea. Each value has one owner, and when the owner goes out of scope the value is dropped. A good exercise is to write small functions that take a String and see what the compiler tells you when you use it afterwards."],
+      ["user", "the compiler yelling at me is weirdly nice. theres another person on the course, alex moreau, we're pairing on the exercises on thursdays"],
+      ["assistant", "Pairing is a good fit for Rust, because one of you can read the compiler's messages aloud while the other thinks about the design."],
+      ["user", "yeah. my plan is python for scripts, rust for services. im not rewriting my scripts in rust, thats silly. but anything that runs all day, rust"],
+      ["assistant", "That split is common. Python where you want to write quickly and throw the code away, Rust where you want predictable behaviour and a small footprint over months of uptime."],
+      ["user", "exactly. ok going to do the exercises"]
+    ]
+  },
+  {
+    "id": "s04", "kind": "work", "app": "codex", "model_family": "openai", "project": "hearth",
+    "title": "Starting hearth", "started_at": "2026-01-07T21:15:00+00:00",
+    "messages": [
+      ["user", "starting a home automation thing. calling it hearth. pi 4 in the cupboard by the boiler, mosquitto for mqtt, a few temp sensors on esp32s"],
+      ["assistant", "Good starting point. Sensors publish to topics like hearth/<room>/temp, and a collector subscribes and stores the readings. Where do you want the readings stored?"],
+      ["user", "sqlite. one file, no server to babysit. its a pi, keep it small"],
+      ["assistant", "SQLite is fine at this volume: six sensors at one reading a minute is a few thousand rows a day. I will create a readings table with (sensor, ts, value) and an index on (sensor, ts)."],
+      ["user", "yes. collector in python for now, a quick script. the long running bridge between mqtt and the heating relay will be rust later, once ive got further in the course"],
+      ["assistant", "Sounds good. I will scaffold collector.py now and leave a bridge/ directory for the Rust crate."],
+      ["user", "also the heating schedule: weekdays 6:30 to 8 in the morning and 6 to 10 in the evening"],
+      ["assistant", "Added to schedule.toml: weekdays 06:30-08:00 and 18:00-22:00."],
+      ["user", "ok good. i need sleep, ill wire the relay on the weekend"]
+    ]
+  },
+  {
+    "id": "s05", "kind": "chat", "app": "claude.ai", "model_family": "anthropic", "project": null,
+    "title": "A plan for a 10k", "started_at": "2026-01-08T18:30:00+00:00",
+    "messages": [
+      ["user", "can you make me a plan to run a 10k? i want to do a 10k in bristol on 15 march. i can currently do about 5k without dying"],
+      ["assistant", "Yes. Ten weeks is workable from 5k. Three runs a week: two easy runs of 30 to 40 minutes and one long run that starts at 6 km and grows by about 1 km a week, with an easier week every fourth week."],
+      ["user", "i live in clifton so i mostly run on the downs. is that ok for the long run"],
+      ["assistant", "The Downs are good for it. Keep the long run on the flatter loops at first and leave hill work until the fourth week or later."],
+      ["user", "ok. mon wed sat. goal is just to finish, not a time"],
+      ["assistant", "A finish goal is a good one for a first 10k. Week 1 is three runs of about 20 minutes easy, with a minute of walking if you need it."],
+      ["user", "starting monday!"],
+      ["assistant", "Good luck on Monday. Keep the first week easy enough that you could talk while running."],
+      ["user", "will try. i never can talk and run, ill just wheeze"]
+    ]
+  },
+  {
+    "id": "s06", "kind": "chat", "app": "claude.ai", "model_family": "anthropic", "project": null,
+    "title": "Trekking in the Atlas Mountains", "started_at": "2026-01-09T21:00:00+00:00",
+    "messages": [
+      ["user", "planning a trek in the atlas mountains in morocco with my friend jo. toubkal, late april. where do i even start"],
+      ["assistant", "Toubkal is the highest peak in North Africa and a realistic multi-day trek. The usual shape is flights to Marrakech, a transfer to Imlil, a few days with a guide, and guesthouses on the way. How many days, and what budget?"],
+      ["user", "about 5 days. budget is 700 quid each all in, max. jo is flexible"],
+      ["assistant", "700 pounds each for 5 days is feasible if you use local guesthouses and share the guide's cost. Flights are usually the biggest single item, so look at those first."],
+      ["user", "honestly i dont plan much, i just book things last minute and wing it. i travel spontaneously, always have. so no need for a rigid itinerary"],
+      ["assistant", "That works for most of it. In April the guesthouse beds in Imlil can fill up, so book at least the first and last nights."],
+      ["user", "fair. if i had more money id do the 8 day guided grande traversee thing with a proper mule team lol. but 700 is 700"],
+      ["assistant", "A budget trek of 5 days can be a very good trip. The longer guided routes are a different kind of cost, and you can always do one later."],
+      ["user", "ok ill look at flights tomorrow"],
+      ["assistant", "Compare a few dates before you book, since flights to Marrakech can differ a lot between weekdays."],
+      ["user", "ok. jo prefers mornings so ill look at those first"]
+    ]
+  },
+  {
+    "id": "s07", "kind": "chat", "app": "claude.ai", "model_family": "anthropic", "project": null,
+    "title": "First loaf", "started_at": "2026-01-10T11:00:00+00:00",
+    "messages": [
+      ["user", "gerald doubled in 4 hours!! baking today"],
+      ["assistant", "That is a strong starter. For a first loaf, try 500 g bread flour, 350 g water, 100 g active starter and 10 g salt. Mix, rest, and fold the dough every 30 minutes for the first two hours."],
+      ["user", "if this works im quitting engineering to open a bakery in a cabin. gerald will be the face of the brand"],
+      ["assistant", "Gerald's brand is secure. Meanwhile, keep the dough covered while it rests so the surface does not dry out."],
+      ["user", "ok dough resting. will report back"]
+    ]
+  }
+]

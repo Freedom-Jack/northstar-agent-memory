@@ -8,3 +8,11 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Personal data and results: never committed
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+runs/
+normal_use/
+settings.toml

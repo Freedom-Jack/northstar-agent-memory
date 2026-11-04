@@ -1,0 +1,320 @@
+[
+ {
+  "question_id": "ku_001",
+  "question_type": "knowledge-update",
+  "question": "What is my current job title?",
+  "answer": "Senior analyst",
+  "question_date": "2023/07/01 (Sat) 09:00",
+  "haystack_session_ids": [
+   "answer_4be1b6b4_1",
+   "sharegpt_Qm2xKa1_0",
+   "ultrachat_231069"
+  ],
+  "haystack_dates": [
+   "2023/06/10 (Sat) 18:30",
+   "2023/03/02 (Thu) 10:15",
+   "2023/04/20 (Thu) 08:00"
+  ],
+  "haystack_sessions": [
+   [
+    {
+     "role": "user",
+     "content": "Big news: I got promoted to senior analyst last week at the shipping firm.",
+     "has_answer": true
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulations on the promotion to senior analyst!"
+    },
+    {
+     "role": "user",
+     "content": "Thanks, I need to learn the new reporting tools."
+    },
+    {
+     "role": "assistant",
+     "content": "Start with the dashboards your team lead uses most."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "I just started as a junior analyst at a shipping firm and I am nervous."
+    },
+    {
+     "role": "assistant",
+     "content": "A new role is a lot; ask questions early and keep notes."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "Any tips for growing basil on a sunny balcony?"
+    },
+    {
+     "role": "assistant",
+     "content": "Basil likes six hours of sun and regular watering. Pinch off flowers to keep leaves coming."
+    },
+    {
+     "role": "user",
+     "content": "How often should I water it in July?"
+    },
+    {
+     "role": "assistant",
+     "content": "Water when the top inch of soil is dry, usually every second day in summer."
+    }
+   ]
+  ],
+  "answer_session_ids": [
+   "answer_4be1b6b4_1"
+  ]
+ },
+ {
+  "question_id": "tr_001",
+  "question_type": "temporal-reasoning",
+  "question": "How many days passed between my first pottery class and buying the kiln?",
+  "answer": 12,
+  "question_date": "2023/05/01 (Mon) 20:00",
+  "haystack_session_ids": [
+   "answer_7c0f3a21_1",
+   "answer_7c0f3a21_2",
+   "sharegpt_yywfIrx_0",
+   "sharegpt_yywfIrx_0"
+  ],
+  "haystack_dates": [
+   "2023/04/03 (Mon) 19:00",
+   "2023/04/15 (Sat) 11:00",
+   "2023/04/05 (Wed) 07:30",
+   "2023/04/25 (Tue) 07:30"
+  ],
+  "haystack_sessions": [
+   [
+    {
+     "role": "user",
+     "content": "I attended my first pottery class tonight and made a lopsided bowl.",
+     "has_answer": true
+    },
+    {
+     "role": "assistant",
+     "content": "A lopsided first bowl is a classic start. Did you enjoy the wheel?"
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "I bought a small kiln today so I can fire pieces at home.",
+     "has_answer": true
+    },
+    {
+     "role": "assistant",
+     "content": "A home kiln is a big step; check the wiring and ventilation first."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "What is a good hydration level for a first sourdough loaf?"
+    },
+    {
+     "role": "assistant",
+     "content": "Start around seventy percent hydration; it is forgiving and easy to shape."
+    },
+    {
+     "role": "user",
+     "content": "And how long should the bulk ferment take?"
+    },
+    {
+     "role": "assistant",
+     "content": "Four to six hours at room temperature, until the dough has grown by half."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "What is a good hydration level for a first sourdough loaf?"
+    },
+    {
+     "role": "assistant",
+     "content": "Start around seventy percent hydration; it is forgiving and easy to shape."
+    },
+    {
+     "role": "user",
+     "content": "And how long should the bulk ferment take?"
+    },
+    {
+     "role": "assistant",
+     "content": "Four to six hours at room temperature, until the dough has grown by half."
+    }
+   ]
+  ],
+  "answer_session_ids": [
+   "answer_7c0f3a21_1",
+   "answer_7c0f3a21_2"
+  ]
+ },
+ {
+  "question_id": "ms_001",
+  "question_type": "multi-session",
+  "question": "How many pets do I have in total?",
+  "answer": "3",
+  "question_date": "2023/09/12 (Tue) 12:00",
+  "haystack_session_ids": [
+   "answer_d3f8a6b0_1",
+   "ultrachat_55120",
+   "answer_d3f8a6b0_2"
+  ],
+  "haystack_dates": [
+   "2023/08/01 (Tue) 17:00",
+   "2023/08/10 (Thu) 06:45",
+   "2023/09/02 (Sat) 14:20"
+  ],
+  "haystack_sessions": [
+   [
+    {
+     "role": "user",
+     "content": "I have two dogs, Pepper and Biscuit, and they bark at the mailman.",
+     "has_answer": true
+    },
+    {
+     "role": "assistant",
+     "content": "Two dogs is a handful. Pepper and Biscuit sound lively."
+    }
+   ],
+   [
+    {
+     "role": "assistant",
+     "content": "Welcome back. What would you like to work on today?"
+    },
+    {
+     "role": "user",
+     "content": "I want a simple three-day running plan for a beginner."
+    },
+    {
+     "role": "assistant",
+     "content": "Try run-walk intervals: two minutes jogging, one minute walking, repeated eight times."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "We also adopted a cat named Juniper, so the house is busy.",
+     "has_answer": true
+    },
+    {
+     "role": "assistant",
+     "content": "Congratulations on adopting Juniper!"
+    }
+   ]
+  ],
+  "answer_session_ids": [
+   "answer_d3f8a6b0_1",
+   "answer_d3f8a6b0_2"
+  ]
+ },
+ {
+  "question_id": "su_001",
+  "question_type": "single-session-user",
+  "question": "What color did I paint the bookshelf?",
+  "answer": "Teal",
+  "question_date": "2023/10/05 (Thu) 21:10",
+  "haystack_session_ids": [
+   "answer_280352e9",
+   "sharegpt_Jcy1CVN_0"
+  ],
+  "haystack_dates": [
+   "2023/09/20 (Wed) 16:00",
+   "2023/09/28 (Thu) 09:00"
+  ],
+  "haystack_sessions": [
+   [
+    {
+     "role": "user",
+     "content": "I finally painted the bookshelf teal this weekend and it looks great.",
+     "has_answer": true
+    },
+    {
+     "role": "assistant",
+     "content": "Teal is a bold choice. Did you use a primer first?"
+    },
+    {
+     "role": "user",
+     "content": "Yes, one coat of primer and two of paint."
+    },
+    {
+     "role": "assistant",
+     "content": "That should last well."
+    }
+   ],
+   [
+    {
+     "role": "user",
+     "content": "Any tips for growing basil on a sunny balcony?"
+    },
+    {
+     "role": "assistant",
+     "content": "Basil likes six hours of sun and regular watering. Pinch off flowers to keep leaves coming."
+    },
+    {
+     "role": "user",
+     "content": "How often should I water it in July?"
+    },
+    {
+     "role": "assistant",
+     "content": "Water when the top inch of soil is dry, usually every second day in summer."
+    }
+   ]
+  ],
+  "answer_session_ids": [
+   "answer_280352e9"
+  ]
+ },
+ {
+  "question_id": "ku_002_abs",
+  "question_type": "knowledge-update",
+  "question": "What is the phone number of my sister?",
+  "answer": "The information provided is not enough: no phone number for your sister was mentioned.",
+  "question_date": "2023/11/02 (Thu) 10:00",
+  "haystack_session_ids": [
+   "ultrachat_318420",
+   "sharegpt_Cr2tc1f_0"
+  ],
+  "haystack_dates": [
+   "2023/10/01 (Sun) 08:00",
+   "2023/10/15 (Sun) 06:30"
+  ],
+  "haystack_sessions": [
+   [
+    {
+     "role": "user",
+     "content": "What is a good hydration level for a first sourdough loaf?"
+    },
+    {
+     "role": "assistant",
+     "content": "Start around seventy percent hydration; it is forgiving and easy to shape."
+    },
+    {
+     "role": "user",
+     "content": "And how long should the bulk ferment take?"
+    },
+    {
+     "role": "assistant",
+     "content": "Four to six hours at room temperature, until the dough has grown by half."
+    }
+   ],
+   [
+    {
+     "role": "assistant",
+     "content": "Welcome back. What would you like to work on today?"
+    },
+    {
+     "role": "user",
+     "content": "I want a simple three-day running plan for a beginner."
+    },
+    {
+     "role": "assistant",
+     "content": "Try run-walk intervals: two minutes jogging, one minute walking, repeated eight times."
+    }
+   ]
+  ],
+  "answer_session_ids": []
+ }
+]

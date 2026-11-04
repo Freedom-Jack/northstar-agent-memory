@@ -1,0 +1,122 @@
+[
+ {
+  "key": "u_home",
+  "old": "m_home_bristol",
+  "new": "m_home_bath",
+  "at": "s27:2",
+  "reason": "user_later_statement",
+  "scenarios": [
+   "S1"
+  ]
+ },
+ {
+  "key": "u_commute",
+  "old": "m_commute_walk",
+  "new": "m_commute_train",
+  "at": "s27:2",
+  "reason": "user_later_statement",
+  "scenarios": [
+   "S1"
+  ]
+ },
+ {
+  "key": "u_runbook",
+  "old": "m_atlas_no_runbook",
+  "new": "m_atlas_runbook",
+  "at": "s30:2",
+  "reason": "user_later_statement",
+  "scenarios": [
+   "S1"
+  ]
+ },
+ {
+  "key": "u_dog_travel",
+  "old": "m_travel_spontaneous",
+  "new": "m_dog_limits_travel",
+  "at": "s18:4",
+  "reason": "implicit",
+  "scenarios": [
+   "S2"
+  ]
+ },
+ {
+  "key": "u_arch",
+  "old": "m_micro_first",
+  "new": "m_monolith_first",
+  "at": "s16:6",
+  "reason": "user_later_statement",
+  "scenarios": [
+   "S3"
+  ]
+ },
+ {
+  "key": "u_rust_drift",
+  "old": "m_rust_enthusiastic",
+  "new": "m_rust_doubtful",
+  "at": "s26:0",
+  "reason": "implicit_drift",
+  "scenarios": [
+   "S4"
+  ]
+ },
+ {
+  "key": "u_store_influx",
+  "old": "m_store_sqlite_1",
+  "new": "m_store_influx",
+  "at": "s13:4",
+  "reason": "user_later_statement",
+  "scenarios": [
+   "S5"
+  ]
+ },
+ {
+  "key": "u_store_back",
+  "old": "m_store_influx",
+  "new": "m_store_sqlite_2",
+  "at": "s25:2",
+  "reason": "user_later_statement",
+  "scenarios": [
+   "S5"
+  ]
+ },
+ {
+  "key": "u_goal_stall",
+  "old": "m_goal_10k_set",
+  "new": "m_goal_10k_stalled",
+  "at": "s14:0",
+  "reason": "user_later_statement",
+  "scenarios": [
+   "S11"
+  ]
+ },
+ {
+  "key": "u_goal_drop",
+  "old": "m_goal_10k_stalled",
+  "new": "m_goal_10k_abandoned",
+  "at": "s23:0",
+  "reason": "user_later_statement",
+  "scenarios": [
+   "S11"
+  ]
+ },
+ {
+  "key": "u_goal_revive",
+  "old": "m_goal_10k_abandoned",
+  "new": "m_goal_5k_revived",
+  "at": "s29:0",
+  "reason": "user_later_statement",
+  "scenarios": [
+   "S11"
+  ]
+ },
+ {
+  "key": "u_cache_correction",
+  "old": "m_cache_drop_initial",
+  "new": "m_cache_response_removed",
+  "at": "s22:2",
+  "reason": "user_correction",
+  "scenarios": [
+   "S17"
+  ]
+ }
+]
