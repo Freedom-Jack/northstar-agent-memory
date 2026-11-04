@@ -149,6 +149,84 @@ def test_doctor_on_the_api_route_says_when_no_cap_is_set(capsys):
     assert "monthly cost cap: not set, so live model calls are refused" in capsys.readouterr().out
 
 
+# --- doctor: the stores and encryption at rest ----------------------------------------------------------------
+
+
+def stores_section(out: str) -> str:
+    return out.split("stores:\n", 1)[1].split("route:", 1)[0]
+
+
+def test_doctor_lists_the_six_stores_and_creates_none(capsys):
+    from northstar_agent_memory.core import db
+
+    assert cli.run(["doctor"]) == 0
+    section = stores_section(capsys.readouterr().out)
+    for name in db.STORES:
+        assert f"  {name}: not created yet\n" in section
+    assert "encryption at rest: satisfied (FileVault is On.)" in section
+    assert not any(db.store_path(name).exists() for name in db.STORES)  # a check never creates a store
+
+
+def test_doctor_shows_each_present_store_with_its_schema_version_and_size(capsys):
+    from northstar_agent_memory.core import db
+
+    for name in ("history", "memory"):
+        db.open_store(name, data_root()).close()
+    assert cli.run(["doctor"]) == 0
+    section = stores_section(capsys.readouterr().out)
+    for name in ("history", "memory"):
+        assert re.search(rf"  {name}: present, schema v1, \d+(\.\d)? (B|KB|MB)\n", section), section
+    for name in ("working", "index", "overview", "runs"):
+        assert f"  {name}: not created yet" in section
+
+
+def test_doctor_says_when_a_store_cannot_be_read(capsys):
+    from northstar_agent_memory.core import db
+
+    path = db.store_path("runs", data_root())
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(b"this is not a database" * 100)
+    assert cli.run(["doctor"]) == 0
+    line = next(l for l in stores_section(capsys.readouterr().out).splitlines() if l.startswith("  runs:"))
+    assert "present, " in line and "but unreadable" in line
+
+
+def test_doctor_says_when_encryption_at_rest_is_not_satisfied(capsys, monkeypatch):
+    monkeypatch.setattr(cli, "filevault_status", lambda: "FileVault is Off.")
+    assert cli.run(["doctor"]) == 0
+    section = stores_section(capsys.readouterr().out)
+    assert "encryption at rest: NOT satisfied (FileVault is Off.; real capture stays off until FileVault is on)" in section
+    assert "not enforced while NORTHSTAR_HOME is set" in section  # the tests' throwaway root is exempt
+
+
+def test_encryption_at_rest_is_only_checked_on_macos(monkeypatch):
+    assert cli.encryption_at_rest() == (True, "FileVault is On.")
+    monkeypatch.setattr(cli.sys, "platform", "linux")
+    ok, detail = cli.encryption_at_rest()
+    assert not ok and "macOS only" in detail
+
+
+def test_store_line_compares_the_schema_version_with_the_newest():
+    base = {"name": "memory", "present": True, "latest": 2, "size": 2048}
+    assert cli.store_line({**base, "version": 2}) == "  memory: present, schema v2, 2.0 KB"
+    assert "schema v1 (v2 is newest: it is migrated when the store opens)" in cli.store_line({**base, "version": 1})
+    assert "schema v3, newer than this program knows (v2)" in cli.store_line({**base, "version": 3})
+    assert cli.store_line({"name": "runs", "present": False, "latest": 1}) == "  runs: not created yet"
+
+
+def test_store_report_counts_the_write_ahead_log_in_the_size(tmp_path):
+    from northstar_agent_memory.core import db
+
+    conn = db.open_store("history", tmp_path)
+    try:
+        entry = next(e for e in cli.store_report(tmp_path) if e["name"] == "history")
+        wal = tmp_path / "history.db-wal"
+        assert entry["size"] == (tmp_path / "history.db").stat().st_size + (wal.stat().st_size if wal.exists() else 0)
+        assert entry["version"] == entry["latest"] == 1
+    finally:
+        conn.close()
+
+
 # --- doctor: the route, the programs and the logins (no model is called) --------------------------------------
 
 EMAIL = "someone@example.com"

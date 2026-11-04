@@ -3,7 +3,7 @@
 # and record why. Nothing here is personal; the user's own settings (cost caps,
 # personal folders) live in <data root>/settings.toml and override these.
 
-config_version = "2026-11-04.1"  # .1: the QA judge grades 8 answers a call; 2026-10-29.1: the harness route; 2026-10-28.2: OpenAI models, held-out sizes
+config_version = "2026-11-04.3"  # .3: [maintenance] check_families, read by the write gate; 2026-11-04.2: the [maintenance] block, so the core reads its starting values from here (I19); 2026-11-04.1: the QA judge grades 8 answers a call; 2026-10-29.1: the harness route; 2026-10-28.2: OpenAI models, held-out sizes
 
 # Model IDs per family and role (DESIGN §1.4). Anthropic IDs and prices are from the
 # Claude API reference as cached 2026-10-06; OpenAI IDs and prices from
@@ -111,6 +111,38 @@ monthly_soft_usd = 0
 monthly_hard_usd = 0
 # A single evaluation run stops when it would pass this, unless the run sets its own.
 run_default_usd = 5.0
+
+# The core's starting values (MEMORY-ARCHITECTURE §5.13, I19). The write gate, the run store and the stores read
+# them from here; each reader falls back to the same number if a key is missing, and a drift test keeps the two in
+# step. The user's <data root>/settings.toml may override a key. Every one is a value that use and audits move through
+# a tested release, never an edit by a model.
+[maintenance]
+# Caps per run and the loss bound (§5.9, §5.12). Read by the write gate (invariants.Limits).
+loss_bound = 0.05              # a run may retire at most this share of active items; above it the run is held
+loss_bound_min = 1             # ...but always at least this many, so a small store can still correct itself
+max_ops_per_proposal = 60      # extraction: 60 changes per window
+max_structure_changes_per_run = 2   # weekly: at most 2 splits or merges of topics
+max_label_changes_per_run = 3  # ...and 3 labels changing
+idea_move_share = 0.05         # ...and 5% of ideas moving
+# Quarantine (§5.9): a failing proposal waits aside, then is discarded after 3 attempts in 7 days.
+quarantine_attempts = 3        # runs.db holds at most 3 (a table check); a lower number is allowed
+quarantine_days = 7
+# Jobs (§2.12): a job leased this many times without finishing is quarantined, not leased again.
+max_job_attempts = 3
+# Error budget (§5.9): a change type whose audited error rate passes this is frozen, but only after the audited
+# sample is at least error_budget_min_sample changes, so one early miss cannot freeze a type.
+error_budget = 0.02
+error_budget_min_sample = 20
+# The model families a check may be routed to (§5.9, DESIGN §1.2). The write gate accepts a check by the family that
+# did the work, or said the claim, as "not independent" only where no other family on this list is left. Someone with
+# one family (one login) sets this to that one in <data root>/settings.toml; the change then applies, labelled.
+check_families = ["anthropic", "openai"]
+# Triggers (§5.13): a session counts as idle after this many minutes.
+idle_trigger_minutes = 30
+# Sizes that other core modules still hold as constants; test_contract keeps these equal to them.
+goal_card_top_items = 8        # a goal card lists at most this many items (§2.10; index_store)
+fingerprint_words = 8          # a delivered line is fingerprinted by runs of 8 words (§2.5, I11; working)
+echo_overlap = 0.6             # a reply echoing this share of a delivered line is Northstar's own text (§2.5, I11)
 
 # DESIGN §8 starting values, fixed before the data they judge.
 [eval]

@@ -18,13 +18,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import sqlite3
 import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import quote
 
 from northstar_agent_memory import __version__
 from northstar_agent_memory import config as northstar_config
+from northstar_agent_memory.core import db as core_db
 from northstar_agent_memory.eval import longmemeval as lme
 from northstar_agent_memory.eval import normal_use, report, runner
 from northstar_agent_memory.eval.scenarios.ledger import ask
@@ -81,6 +85,70 @@ def filevault_status() -> str:
         return "unknown (fdesetup is not available)"
     lines = (proc.stdout or proc.stderr).strip().splitlines()
     return lines[0] if lines else "unknown"
+
+
+def encryption_at_rest() -> tuple[bool, str]:
+    """Whether the data folder is encrypted at rest, as real capture needs it (PL-3, MEMORY-ARCHITECTURE §3.1)."""
+    if sys.platform != "darwin":
+        return False, "not checked: this check reads FileVault, which is macOS only"
+    status = filevault_status()
+    if "FileVault is On" in status:
+        return True, status
+    return False, f"{status}; real capture stays off until FileVault is on"
+
+
+def _bytes(n: int) -> str:
+    size = float(n)
+    for unit in ("B", "KB", "MB", "GB"):
+        if size < 1024 or unit == "GB":
+            return f"{int(size)} B" if unit == "B" else f"{size:.1f} {unit}"
+        size /= 1024
+    return f"{n} B"
+
+
+def store_report(root: Path) -> list[dict]:
+    """One entry per store: whether its file is there, its schema version beside the newest this program knows, and
+    its size (with its write-ahead log). It only reads, and never creates a store."""
+    report = []
+    for name in core_db.STORES:
+        path = core_db.store_path(name, root)
+        entry: dict = {"name": name, "present": path.exists(), "latest": core_db.migration_files(name)[-1][0]}
+        if entry["present"]:
+            entry["size"] = sum(p.stat().st_size for p in (path, path.with_name(path.name + "-wal")) if p.exists())
+            try:
+                conn = sqlite3.connect(f"file:{quote(path.resolve().as_posix())}?mode=ro", uri=True)
+                try:
+                    entry["version"] = core_db.current_version(conn, name)
+                finally:
+                    conn.close()
+            except sqlite3.Error as err:
+                entry["error"] = str(err)
+        report.append(entry)
+    return report
+
+
+def store_line(entry: dict) -> str:
+    if not entry["present"]:
+        return f"  {entry['name']}: not created yet"
+    if "error" in entry:
+        return f"  {entry['name']}: present, {_bytes(entry['size'])}, but unreadable ({entry['error']})"
+    version, latest = entry["version"], entry["latest"]
+    if version < latest:
+        schema = f"schema v{version} (v{latest} is newest: it is migrated when the store opens)"
+    elif version > latest:
+        schema = f"schema v{version}, newer than this program knows (v{latest})"
+    else:
+        schema = f"schema v{version}"
+    return f"  {entry['name']}: present, {schema}, {_bytes(entry['size'])}"
+
+
+def print_stores() -> None:
+    print("stores:")
+    for entry in store_report(data_root()):
+        print(store_line(entry))
+    satisfied, detail = encryption_at_rest()
+    enforced = "" if not os.environ.get("NORTHSTAR_HOME") else "; not enforced while NORTHSTAR_HOME is set"
+    print(f"  encryption at rest: {'satisfied' if satisfied else 'NOT satisfied'} ({detail}){enforced}")
 
 
 def _usd(x: float) -> str:
@@ -147,6 +215,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     settings = northstar_config.settings_path()
     print(f"settings file: {settings}  ({'present' if settings.exists() else 'absent: defaults only'})")
     print(f"FileVault: {filevault_status()}")
+    print_stores()
     try:
         route = resolve_route(config)
     except ModelError as err:
@@ -507,7 +576,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="northstar", description="Northstar: a memory and focus layer for the AI you already use.")
     top = parser.add_subparsers(dest="command", required=True)
 
-    top.add_parser("doctor", help="show the data root, the route, the harness programs and logins, key status, cost caps and configured models").set_defaults(func=cmd_doctor)
+    top.add_parser("doctor", help="show the data root, the six stores and encryption at rest, the route, the harness programs and logins, key status, cost caps and configured models").set_defaults(func=cmd_doctor)
 
     models = top.add_parser("models", help="model access").add_subparsers(dest="models_command", required=True)
     check = models.add_parser("check", help="list the models your keys can reach (changes nothing)")
