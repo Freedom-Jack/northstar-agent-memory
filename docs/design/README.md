@@ -2,6 +2,8 @@
 
 > **Status 2026-10-28:** the design is settled. [`revision-2026-10-23/DESIGN.md`](revision-2026-10-23/DESIGN.md) version 3.4 (3.3 of 2026-10-28, with the route revised on 2026-10-29) is the baseline that the prototype is built from, and [`revision-2026-10-23/MEMORY-ARCHITECTURE.md`](revision-2026-10-23/MEMORY-ARCHITECTURE.md) (approved as written on 2026-10-28) holds its data structures and algorithms. Everything else in this folder is the earlier proposal of 2026-10-09, kept as a component library; DESIGN.md §12 says what is kept, replaced and dropped.
 >
+> **Build status 2026-11-07:** steps 1 to 3 of DESIGN §10 are built and tested (the measurement harness, the core, and capture for Claude Code). What exists, how to run it and what is next: [`../PROTOTYPE.md`](../PROTOTYPE.md).
+>
 > **Earlier status 2026-10-25 (superseded):** the current proposal then was [`revision-2026-10-23/DESIGN.md`](revision-2026-10-23/DESIGN.md), version 3.2 of the three-job design (focus, memory, maintenance over one core), with its review page [`revision-2026-10-23/review.html`](revision-2026-10-23/review.html). The user approved it with changes twice on 2026-10-24 and answered a third round on 2026-10-25. Northstar is a memory and focus layer that works with the AIs the user already uses; ChatGPT's Dreaming memory system is the reference. Everything else in this folder is the earlier proposal of 2026-10-09, kept as a component library; DESIGN.md §12 says what is kept, replaced and dropped.
 >
 > **Earlier status 2026-10-14 (superseded):** this was an earlier proposal, then being re-explored; start from [`docs/GOAL.md`](../GOAL.md) and [`docs/EXPLORATION.md`](../EXPLORATION.md).

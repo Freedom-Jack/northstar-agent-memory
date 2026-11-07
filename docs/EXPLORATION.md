@@ -9,6 +9,8 @@
 
 **Next:** build the baseline prototype in Claude Code on this Mac (DESIGN §9), in the order of DESIGN §10, starting with the measurement harness and the baseline without Northstar. Then measure it (DESIGN §8) and improve it by measuring. There are no more look-and-react rounds.
 
+**What is built (2026-11-07).** Steps 1 to 3 of DESIGN §10 (the measurement harness, the core, and capture for Claude Code) are built and tested; capture is not yet installed and no sessions are imported. What exists, how to run it and what is next: [`PROTOTYPE.md`](PROTOTYPE.md).
+
 **Stage 0, the harness and the baselines without Northstar (2026-11-04, done).** On the user's own plans through Claude Code and Codex headless (DESIGN §1.4). Claude Opus 5.5 answers; GPT-6.1 Sol judges, 8 answers a call. Results stay in the data root; these are aggregates.
 - **Judge test: passed.** LongMemEval: 0 of 101 wrong answers accepted (95% upper bound 3.7%), 40 of 40 right ones. Pilot persona: 8.7% of 115 wrong answers accepted, under the 10% bar, but 28.6% of partial answers, a weak spot to fix before the scenario bars count.
 - **LongMemEval_S, development set (50 questions; 40 need memory):** no history 0%; B1 keyword search 72.5% [57.5, 85.0]; B2 search agent 92.5% [84.9, 100]; B3 the evidence 100%. On 15 questions (11 need memory): B0 the whole history 11 of 11, at about 143,000 tokens a question; B4 an observation log 9 of 11.
