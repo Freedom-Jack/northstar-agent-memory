@@ -13,6 +13,8 @@ import pytest
 import northstar_agent_memory
 from northstar_agent_memory import cli
 from northstar_agent_memory import config as northstar_config
+from northstar_agent_memory.capture import ingest as capture_ingest
+from northstar_agent_memory.core import db as core_db
 from northstar_agent_memory.eval import judge as jd
 from northstar_agent_memory.eval import longmemeval as lme
 from northstar_agent_memory.eval import runner
@@ -818,3 +820,510 @@ def test_a_plan_limit_stops_a_run_on_the_harness_route_cleanly_and_says_how_to_r
     from northstar_agent_memory.models.budget import CostLedger
 
     assert CostLedger(eval_root() / "cost-ledger.sqlite").entries() == []  # a refused call used no tokens
+
+
+# --- capture -----------------------------------------------------------------------------------------------
+# Every folder, session and settings file below is invented and lives under tmp_path; no test names the real
+# ~/.claude, and the data root is the throwaway one from conftest.
+
+from datetime import datetime, timezone
+
+from northstar_agent_memory.capture import install as capture_install
+from northstar_agent_memory.capture import spool
+from northstar_agent_memory.core.history import SQLiteHistoryStore
+
+SESSION_ID = "5e55a0a0-0000-4000-8000-000000000001"
+NOW = datetime(2026, 3, 2, 9, 0, 0, tzinfo=timezone.utc).timestamp()
+PROMPT = "Keep the 1-minute readings for 7 days, please."
+REPLY = "Done: older readings become hourly averages."
+
+
+@pytest.fixture
+def cap(tmp_path):
+    """An invented personal folder with a repository in it, an invented work folder, and the settings that name the first."""
+    personal = tmp_path / "personal"
+    repo = personal / "energy-dash"
+    (repo / ".git").mkdir(parents=True)
+    work = tmp_path / "work" / "billing"
+    work.mkdir(parents=True)
+    write_settings(f'[capture]\npersonal_paths = ["{personal}"]\n')
+    settings = tmp_path / "claude-home" / "settings.json"  # stands in for ~/.claude/settings.json
+    settings.parent.mkdir()
+    return type("Cap", (), {"personal": personal, "repo": repo, "work": work, "settings": settings, "tmp": tmp_path})
+
+
+def spooled(cap, event, at, session=SESSION_ID, cwd=None, **payload):
+    spool.append(spool.make_record(event, session, payload, cwd=str(cwd or cap.repo), now=NOW + at))
+
+
+def a_session_in_the_spool(cap):
+    spooled(cap, "SessionStart", 0, source="startup", model="claude-opus-5-5")
+    spooled(cap, "UserPromptSubmit", 5, prompt=PROMPT)
+    spooled(cap, "Stop", 20, last_assistant_message=REPLY)
+
+
+def lines_of(path, *rows):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(json.dumps(r) for r in rows) + "\n", encoding="utf-8")
+    return path
+
+
+def transcript_rows(cwd, session=SESSION_ID):
+    def when(n):
+        return f"2026-03-02T09:00:{n:02d}.000Z"
+
+    base = {"isSidechain": False, "cwd": str(cwd), "sessionId": session}
+    return [
+        {**base, "type": "user", "uuid": f"{session[:4]}-1", "timestamp": when(1), "message": {"role": "user", "content": PROMPT}},
+        {**base, "type": "assistant", "uuid": f"{session[:4]}-2", "timestamp": when(2),
+         "message": {"id": "msg_1", "role": "assistant", "model": "claude-opus-5-5", "content": [{"type": "text", "text": REPLY}],
+                     "usage": {"input_tokens": 1, "output_tokens": 1}}},
+    ]
+
+
+def history_counts():
+    with SQLiteHistoryStore() as store:
+        return tuple(store.conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in ("source", "message"))
+
+
+def run_capture(*args):
+    return cli.run(["capture", *args])
+
+
+# status
+
+
+def test_status_on_a_fresh_machine_says_what_is_missing_and_creates_nothing(capsys):
+    assert run_capture("status") == 0
+    out = capsys.readouterr().out
+    assert "personal folders: none set, so nothing is captured" in out
+    assert "hooks: not installed" in out
+    assert "spool: 0 records waiting" in out
+    assert "ingester: not running; last ingest never" in out
+    assert "history.db: no history yet" in out and "capture log, last error: none" in out
+    assert not (data_root() / "spool").exists() and not (data_root() / "capture").exists() and not (data_root() / "history.db").exists()
+
+
+def test_status_shows_the_spool_the_oldest_record_and_no_chat_text(cap, capsys):
+    a_session_in_the_spool(cap)
+    assert run_capture("status") == 0
+    out = capsys.readouterr().out
+    assert f"personal folders (1): {cap.personal.resolve()}" in out
+    assert "spool: 3 records waiting, the oldest from 2026-03-02T09:00:00.000Z (1 files," in out
+    assert PROMPT not in out and REPLY not in out
+
+
+def test_status_after_an_ingest_counts_sources_and_messages_and_dates_the_last_ingest(cap, capsys):
+    a_session_in_the_spool(cap)
+    assert run_capture("ingest") == 0
+    assert "ingested 3 records: 2 messages, 1 new sources" in capsys.readouterr().out
+    assert run_capture("status") == 0
+    out = capsys.readouterr().out
+    assert "spool: 0 records waiting" in out and "last ingest never" not in out
+    assert "history.db: 1 sources, 2 messages" in out and "claude-code: 1 sources, 2 messages" in out
+    assert PROMPT not in out
+
+
+def test_status_shows_the_last_error_in_the_capture_log(cap, capsys):
+    spool.log("hook", "ValueError: no good", level="error")
+    spool.log("ingest", "all fine", level="info")
+    assert run_capture("status") == 0
+    assert "capture log, last error: " in (out := capsys.readouterr().out) and "ValueError: no good" in out and "all fine" not in out
+
+
+def test_status_says_when_an_ingester_holds_the_lock(cap, capsys):
+    fd = spool.try_lock(spool.lock_path())
+    try:
+        assert run_capture("status") == 0
+    finally:
+        spool.unlock(fd)
+    assert "ingester: running now" in capsys.readouterr().out
+
+
+def test_status_counts_unreadable_spool_lines(cap, capsys):
+    a_session_in_the_spool(cap)
+    with next(iter(spool.spool_files())).open("ab") as fh:
+        fh.write(b"not a record\n")
+    run_capture("status")
+    assert "1 unreadable lines" in capsys.readouterr().out
+
+
+# install and uninstall: a settings file
+
+
+def test_install_needs_a_path_and_never_defaults_to_the_real_settings(capsys):
+    with pytest.raises(SystemExit):
+        cli.run(["capture", "install"])
+    with pytest.raises(SystemExit):
+        cli.run(["capture", "install", "--settings", "a", "--plugin-dir", "b"])
+    with pytest.raises(SystemExit):
+        cli.run(["capture", "uninstall"])
+    src = Path(cli.__file__).read_text() + Path(capture_install.__file__).read_text()
+    assert ".claude/settings" not in src and "Path.home" not in Path(capture_install.__file__).read_text()
+
+
+def test_a_dry_run_install_prints_what_would_change_and_writes_nothing(cap, capsys):
+    original = json.dumps({"model": "opus", "env": {"A": "1"}}, indent=2) + "\n"
+    cap.settings.write_text(original)
+    assert run_capture("install", "--settings", str(cap.settings), "--dry-run") == 0
+    out = capsys.readouterr().out
+    assert "dry run: nothing is written" in out and f"settings file: {cap.settings}" in out
+    for name in capture_install.EVENTS:
+        assert f"add    {name}:" in out
+    assert "backup:" in out and "no other key in the settings file changes" in out
+    assert cap.settings.read_text() == original and not list(cap.settings.parent.glob("*backup*"))
+    assert capture_install.recorded_installs() == []
+
+
+def test_install_merges_keeps_a_backup_records_it_and_status_sees_it(cap, capsys):
+    original = json.dumps({"model": "opus", "env": {"A": "1"}, "hooks": {"Stop": [{"hooks": [{"type": "command", "command": "/x/notify"}]}]}}, indent=2) + "\n"
+    cap.settings.write_text(original)
+    assert run_capture("install", "--settings", str(cap.settings)) == 0
+    out = capsys.readouterr().out
+    assert "check: " in out and "starts the hook" in out and "installed: new Claude Code sessions run the hooks" in out
+    data = json.loads(cap.settings.read_text())
+    assert data["model"] == "opus" and data["env"] == {"A": "1"} and data["hooks"]["Stop"][0]["hooks"][0]["command"] == "/x/notify"
+    assert set(capture_install.northstar_events(data)) == set(capture_install.EVENTS)
+    (backup,) = cap.settings.parent.glob("settings.json.northstar-backup-*")
+    assert backup.read_text() == original
+    assert run_capture("status") == 0
+    out = capsys.readouterr().out
+    assert f"hooks: settings {cap.settings.resolve()}: all {len(capture_install.EVENTS)} events" in out
+
+
+def test_a_second_install_says_so_and_changes_nothing(cap, capsys):
+    run_capture("install", "--settings", str(cap.settings))
+    first = cap.settings.read_text()
+    capsys.readouterr()
+    assert run_capture("install", "--settings", str(cap.settings)) == 0
+    assert "already installed: nothing changed" in capsys.readouterr().out
+    assert cap.settings.read_text() == first and not list(cap.settings.parent.glob("*backup*"))
+
+
+def test_install_into_invalid_json_is_refused_plainly(cap, capsys):
+    cap.settings.write_text("{oops")
+    assert run_capture("install", "--settings", str(cap.settings)) == 1
+    err = capsys.readouterr().err
+    assert err.startswith("error: ") and "not valid JSON" in err and "Traceback" not in err
+    assert cap.settings.read_text() == "{oops" and capture_install.recorded_installs() == []
+
+
+def test_an_install_whose_command_does_not_start_is_refused_but_a_dry_run_still_shows_the_plan(cap, capsys, monkeypatch):
+    monkeypatch.setattr(capture_install, "check_command", lambda python, timeout_s=20.0: (False, "the interpreter is gone"))
+    assert run_capture("install", "--settings", str(cap.settings)) == 1
+    captured = capsys.readouterr()
+    assert "check FAILED: the interpreter is gone" in captured.out and "does not start" in captured.err
+    assert not cap.settings.exists()
+    assert run_capture("install", "--settings", str(cap.settings), "--dry-run") == 0
+    assert "add    Stop:" in capsys.readouterr().out and not cap.settings.exists()
+
+
+def test_the_hook_command_in_the_file_is_the_project_interpreter_with_no_uv(cap):
+    run_capture("install", "--settings", str(cap.settings))
+    entries = [h for hooks in capture_install.northstar_events(json.loads(cap.settings.read_text())).values() for h in hooks]
+    assert {e["command"] for e in entries} == {capture_install.project_python()}
+    assert all(Path(e["command"]).is_absolute() and e["args"][:3] == ["-P", "-m", "northstar_agent_memory.capture.hook"] for e in entries)
+    assert not any("uv" in e["command"].split("/")[-1:] for e in entries)
+
+
+def test_uninstall_gives_back_the_original_and_status_says_nothing_is_left(cap, capsys):
+    original = json.dumps({"model": "opus", "hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "/x/audit"}]}]}}, indent=2) + "\n"
+    cap.settings.write_text(original)
+    run_capture("install", "--settings", str(cap.settings))
+    capsys.readouterr()
+    assert run_capture("uninstall", "--settings", str(cap.settings), "--dry-run") == 0
+    assert "dry run: nothing is written" in capsys.readouterr().out and "no Northstar hooks" not in cap.settings.read_text()
+    assert capture_install.northstar_events(json.loads(cap.settings.read_text()))  # still installed
+    assert run_capture("uninstall", "--settings", str(cap.settings)) == 0
+    out = capsys.readouterr().out
+    assert f"removed {len(capture_install.EVENTS)} Northstar hooks; nothing else in the file changed" in out
+    assert "what was captured stays in history.db until you excise it" in out
+    assert cap.settings.read_text() == original
+    assert capture_install.recorded_installs() == []
+    run_capture("status")
+    assert "hooks: not installed" in capsys.readouterr().out
+
+
+def test_uninstall_mentions_records_still_waiting_in_the_spool(cap, capsys):
+    run_capture("install", "--settings", str(cap.settings))
+    a_session_in_the_spool(cap)
+    capsys.readouterr()
+    run_capture("uninstall", "--settings", str(cap.settings))
+    assert "3 spool records are still waiting: `northstar capture ingest` writes them" in capsys.readouterr().out
+
+
+def test_uninstall_of_invalid_json_or_a_missing_file_is_an_error(cap, capsys):
+    assert run_capture("uninstall", "--settings", str(cap.settings)) == 1
+    assert "nothing to remove" in capsys.readouterr().err
+    cap.settings.write_text("[1]")
+    assert run_capture("uninstall", "--settings", str(cap.settings)) == 1
+    assert cap.settings.read_text() == "[1]"
+
+
+def test_status_flags_hooks_that_were_removed_by_hand_and_an_interpreter_that_is_gone(cap, capsys, monkeypatch):
+    monkeypatch.setattr(capture_install, "project_python", lambda root=None: str(cap.tmp / "gone" / "python"))
+    monkeypatch.setattr(capture_install, "check_command", lambda python, timeout_s=20.0: (True, "stubbed"))
+    run_capture("install", "--settings", str(cap.settings))
+    capsys.readouterr()
+    run_capture("status")
+    assert "is gone: install again" in capsys.readouterr().out
+    cap.settings.write_text("{}")
+    run_capture("status")
+    assert "no Northstar hooks in it any more" in capsys.readouterr().out
+
+
+def test_install_warns_when_no_personal_folder_is_set(cap, capsys):
+    (data_root() / "settings.toml").unlink()
+    run_capture("install", "--settings", str(cap.settings))
+    assert "no personal folders are set, so nothing is captured yet" in capsys.readouterr().out
+
+
+def test_a_plugin_install_is_refused_while_a_settings_install_has_hooks_and_nothing_is_written(cap, capsys):
+    assert run_capture("install", "--settings", str(cap.settings)) == 0
+    capsys.readouterr()
+    folder = cap.tmp / "plugin"
+    for extra in ([], ["--dry-run"]):
+        assert run_capture("install", "--plugin-dir", str(folder), *extra) == 1
+        captured = capsys.readouterr()
+        assert "capture is already installed as a settings" in captured.err and "twice" in captured.err
+        assert f"northstar capture uninstall --settings {cap.settings.resolve()}" in captured.err
+        assert not folder.exists() and "check:" not in captured.out
+    assert [i["kind"] for i in capture_install.recorded_installs()] == ["settings"]
+    assert run_capture("uninstall", "--settings", str(cap.settings)) == 0  # take the first out, and the second is welcome
+    assert run_capture("install", "--plugin-dir", str(folder)) == 0
+    assert [i["kind"] for i in capture_install.recorded_installs()] == ["plugin"]
+
+
+def test_a_settings_install_is_refused_while_a_plugin_has_hooks(cap, capsys):
+    folder = cap.tmp / "plugin"
+    assert run_capture("install", "--plugin-dir", str(folder)) == 0
+    capsys.readouterr()
+    before = cap.settings.exists()
+    assert run_capture("install", "--settings", str(cap.settings)) == 1
+    err = capsys.readouterr().err
+    assert "capture is already installed as a plugin" in err and "claude plugin uninstall northstar@northstar-local" in err
+    assert cap.settings.exists() == before == False
+    assert [i["kind"] for i in capture_install.recorded_installs()] == ["plugin"]
+
+
+def test_a_plugin_whose_hooks_are_gone_no_longer_blocks_a_settings_install(cap, capsys):
+    folder = cap.tmp / "plugin"
+    run_capture("install", "--plugin-dir", str(folder))
+    (folder / "hooks" / "hooks.json").unlink()
+    capsys.readouterr()
+    assert run_capture("install", "--settings", str(cap.settings)) == 0
+
+
+# install: encryption at rest (PL-3), and the stamp the hook looks for
+
+
+def test_install_checks_encryption_leaves_the_stamp_and_status_and_doctor_report_it(cap, capsys):
+    assert not spool.stamp_path().exists()
+    run_capture("status")
+    assert "encryption stamp: NOT valid, so the hooks write nothing: no encryption stamp" in capsys.readouterr().out
+    assert run_capture("install", "--settings", str(cap.settings)) == 0
+    out = capsys.readouterr().out
+    assert "encryption at rest: " in out and f"encryption stamp written: {spool.stamp_path()}" in out
+    assert spool.encryption_stamp()[0]
+    run_capture("status")
+    assert "encryption stamp: valid (checked " in capsys.readouterr().out
+    assert cli.run(["doctor"]) == 0
+    doctor = capsys.readouterr().out
+    assert "encryption stamp: valid (checked " in doctor
+
+
+def test_doctor_says_when_the_stamp_belongs_to_another_data_folder(cap, capsys):
+    run_capture("install", "--settings", str(cap.settings))
+    stamp = json.loads(spool.stamp_path().read_text())
+    stamp["data_root"] = "/somewhere/else"
+    spool.stamp_path().write_text(json.dumps(stamp))
+    capsys.readouterr()
+    assert cli.run(["doctor"]) == 0
+    assert "encryption stamp: NOT valid, so the hooks write nothing: the encryption stamp is for another data folder" in capsys.readouterr().out
+
+
+def test_install_is_refused_on_a_volume_that_is_not_encrypted_and_writes_nothing(cap, capsys, monkeypatch):
+    from northstar_agent_memory.core import db
+
+    def refuse(root=None):
+        raise db.EncryptionRequired(f"{root} is not on an encrypted volume: turn FileVault on")
+
+    monkeypatch.setattr(db, "require_encryption", refuse)
+    folder = cap.tmp / "plugin"
+    for args in (("--settings", str(cap.settings)), ("--plugin-dir", str(folder)), ("--settings", str(cap.settings), "--dry-run")):
+        assert run_capture("install", *args) == 1
+        err = capsys.readouterr().err
+        assert "not known to be encrypted at rest" in err and "turn FileVault on" in err
+    assert not cap.settings.exists() and not folder.exists() and not spool.stamp_path().exists()
+    assert capture_install.recorded_installs() == []
+
+
+def test_a_dry_run_install_leaves_no_stamp(cap, capsys):
+    assert run_capture("install", "--settings", str(cap.settings), "--dry-run") == 0
+    assert not spool.stamp_path().exists()
+
+
+def test_a_failed_install_leaves_no_stamp(cap, capsys):
+    cap.settings.write_text("{oops")
+    assert run_capture("install", "--settings", str(cap.settings)) == 1
+    assert not spool.stamp_path().exists()
+
+
+def test_install_in_a_plugin_folder_is_refused_for_an_interpreter_the_marketplace_would_lose(cap, capsys, monkeypatch):
+    monkeypatch.setattr(capture_install, "project_python", lambda root=None: "python")
+    monkeypatch.setattr(capture_install, "check_command", lambda python, timeout_s=20.0: (True, "stubbed"))
+    assert run_capture("install", "--plugin-dir", str(cap.tmp / "plugin")) == 1
+    assert "absolute path of an interpreter" in capsys.readouterr().err and not (cap.tmp / "plugin").exists()
+
+
+# install: a plugin folder
+
+
+def test_install_to_a_plugin_folder_writes_the_files_and_prints_the_commands(cap, capsys):
+    folder = cap.tmp / "northstar-plugin"
+    assert run_capture("install", "--plugin-dir", str(folder), "--dry-run") == 0
+    out = capsys.readouterr().out
+    assert "new     hooks/hooks.json" in out and not folder.exists() and capture_install.recorded_installs() == []
+    assert f"claude --plugin-dir {folder.resolve()}" in out  # the commands are shown for a dry run too
+    assert run_capture("install", "--plugin-dir", str(folder)) == 0
+    out = capsys.readouterr().out
+    assert "plugin folder written" in out and "claude plugin install northstar@northstar-local --scope user" in out
+    assert json.loads((folder / ".claude-plugin" / "plugin.json").read_text())["name"] == "northstar"
+    assert set(json.loads((folder / "hooks" / "hooks.json").read_text())["hooks"]) == set(capture_install.EVENTS)
+    run_capture("status")
+    assert f"hooks: plugin {folder.resolve()}: all {len(capture_install.EVENTS)} events" in capsys.readouterr().out
+
+
+def test_a_plugin_folder_holding_another_plugin_is_refused(cap, capsys):
+    folder = cap.tmp / "p"
+    lines_of(folder / ".claude-plugin" / "plugin.json", {"name": "other"})
+    assert run_capture("install", "--plugin-dir", str(folder)) == 1
+    assert "something other than Northstar" in capsys.readouterr().err
+
+
+# ingest
+
+
+def test_ingest_drains_the_spool_into_history_and_a_second_run_finds_nothing(cap, capsys):
+    a_session_in_the_spool(cap)
+    assert run_capture("ingest") == 0
+    assert history_counts() == (1, 2)
+    capsys.readouterr()
+    assert run_capture("ingest") == 0
+    assert "ingested 0 records: 0 messages" in capsys.readouterr().out and history_counts() == (1, 2)
+
+
+def test_ingest_says_so_when_another_ingester_is_running(cap, capsys):
+    a_session_in_the_spool(cap)
+    fd = spool.try_lock(spool.lock_path())
+    try:
+        assert run_capture("ingest") == 0
+    finally:
+        spool.unlock(fd)
+    assert "another ingester is running now; nothing done" in capsys.readouterr().out and not (data_root() / "history.db").exists()
+
+
+def test_ingest_does_nothing_in_a_hidden_run(cap, capsys, monkeypatch):
+    a_session_in_the_spool(cap)
+    monkeypatch.setenv("NORTHSTAR_HIDDEN_RUN", "1")
+    assert run_capture("ingest") == 0
+    assert "one of Northstar's own runs" in capsys.readouterr().out and not (data_root() / "history.db").exists()
+
+
+def test_ingest_reports_an_unencrypted_volume_plainly(cap, capsys, monkeypatch):
+    a_session_in_the_spool(cap)
+
+    def refuse(*a, **k):
+        raise core_db.EncryptionRequired("the data folder is not encrypted at rest")
+
+    monkeypatch.setattr(capture_ingest, "run", refuse)
+    assert run_capture("ingest") == 1
+    assert "not encrypted at rest" in capsys.readouterr().err
+
+
+# backfill
+
+
+def projects_folder(cap):
+    """An invented folder laid out like ~/.claude/projects: one personal session, one work session, one own run."""
+    root = cap.tmp / "projects"
+    lines_of(root / "-p-energy-dash" / f"{SESSION_ID}.jsonl", *transcript_rows(cap.repo))
+    other = "5e55a0a0-0000-4000-8000-000000000002"
+    lines_of(root / "-w-billing" / f"{other}.jsonl", *transcript_rows(cap.work, other))
+    return root
+
+
+def test_a_backfill_dry_run_counts_sessions_in_and_out_of_scope_and_writes_nothing(cap, capsys):
+    root = projects_folder(cap)
+    assert run_capture("backfill", "--from", str(root), "--dry-run") == 0
+    out = capsys.readouterr().out
+    assert "dry run: counting only; nothing is written" in out
+    assert "Backfill: 1 sessions in scope, 1 out of scope" in out
+    assert "Messages: 2 would be written, 0 already stored" in out
+    assert PROMPT not in out
+    assert not (data_root() / "history.db").exists()
+    assert not list((data_root() / "capture").glob("dry-run-*"))  # the scratch folder is removed
+
+
+def test_a_backfill_dry_run_against_an_existing_history_changes_no_row(cap, capsys):
+    root = projects_folder(cap)
+    a_session_in_the_spool(cap)
+    run_capture("ingest")
+    before = history_counts()
+    capsys.readouterr()
+    assert run_capture("backfill", "--from", str(root), "--dry-run") == 0
+    out = capsys.readouterr().out
+    assert history_counts() == before == (1, 2)
+    assert "1 sessions in scope" in out and "Messages: 0 would be written, 2 already stored" in out  # live capture's two turns match
+
+
+def test_a_real_backfill_writes_and_a_later_dry_run_sees_it_as_stored(cap, capsys):
+    root = projects_folder(cap)
+    assert run_capture("backfill", "--from", str(root)) == 0
+    out = capsys.readouterr().out
+    assert "Backfill: 1 sessions in scope, 1 out of scope" in out and "Messages: 2 written" in out
+    assert history_counts() == (1, 2)
+    assert run_capture("backfill", "--from", str(root), "--dry-run") == 0
+    assert "Messages: 0 would be written, 2 already stored" in capsys.readouterr().out
+    assert history_counts() == (1, 2)
+
+
+def test_a_backfill_refuses_a_missing_folder_the_home_folder_and_a_setup_with_no_personal_folders(cap, capsys, monkeypatch):
+    assert run_capture("backfill", "--from", str(cap.tmp / "nope")) == 1
+    assert "is not a folder" in capsys.readouterr().err
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: cap.tmp))
+    assert run_capture("backfill", "--from", str(cap.tmp)) == 1
+    assert "whole home folder" in capsys.readouterr().err
+    (data_root() / "settings.toml").unlink()
+    assert run_capture("backfill", "--from", str(projects_folder(cap)), "--dry-run") == 1
+    assert "no personal folders are set" in capsys.readouterr().err
+
+
+def test_a_backfill_needs_its_folder(capsys):
+    with pytest.raises(SystemExit):
+        cli.run(["capture", "backfill"])
+
+
+# doctor
+
+
+def test_doctor_has_a_capture_section_and_creates_nothing(cap, capsys):
+    a_session_in_the_spool(cap)
+    run_capture("install", "--settings", str(cap.settings))
+    capsys.readouterr()
+    before = sorted(p.name for p in data_root().rglob("*"))
+    assert cli.run(["doctor"]) == 0
+    out = capsys.readouterr().out
+    assert "capture (Claude Code):" in out
+    assert f"personal folders (1): {cap.personal.resolve()}" in out
+    assert f"hooks: settings {cap.settings.resolve()}: all {len(capture_install.EVENTS)} events" in out
+    assert "spool: 3 records waiting" in out and "ingester: not running" in out and "capture log, last error: none" in out
+    assert "history.db:" not in out  # the long form is `capture status`
+    assert sorted(p.name for p in data_root().rglob("*")) == before
+    assert PROMPT not in out
+
+
+def test_doctor_on_a_fresh_machine_says_hooks_are_not_installed(capsys):
+    assert cli.run(["doctor"]) == 0
+    out = capsys.readouterr().out
+    assert "personal folders: none set" in out and "hooks: not installed" in out

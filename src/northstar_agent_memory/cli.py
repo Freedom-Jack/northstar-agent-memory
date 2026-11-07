@@ -8,7 +8,8 @@
     northstar eval normal-use --projects-dir PATH
     northstar eval report --run RUN_ID
 
-Nothing here prints an API key, an email or a login token, or the text of a chat. Runs write under paths.eval_root(). Results
+Nothing here prints an API key, an email or a login token, or the text of a chat. `capture install` never runs without an
+explicit --settings or --plugin-dir path: no command here defaults to, or looks in, the real Claude Code configuration. Runs write under paths.eval_root(). Results
 that hold text from chats are never written inside a git work tree unless `--allow-repo-path` says so,
 and `normal-use` never reads a whole home folder. A run on the test split needs `--held-out`
 (DESIGN §8).
@@ -22,13 +23,20 @@ import os
 import sqlite3
 import subprocess
 import sys
+import tempfile
+from contextlib import ExitStack, contextmanager
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote
 
 from northstar_agent_memory import __version__
 from northstar_agent_memory import config as northstar_config
+from northstar_agent_memory.capture import backfill as capture_backfill
+from northstar_agent_memory.capture import ingest as capture_ingest
+from northstar_agent_memory.capture import install as capture_install
+from northstar_agent_memory.capture import scope, spool
 from northstar_agent_memory.core import db as core_db
+from northstar_agent_memory.core.history import SQLiteHistoryStore
 from northstar_agent_memory.eval import longmemeval as lme
 from northstar_agent_memory.eval import normal_use, report, runner
 from northstar_agent_memory.eval.scenarios.ledger import ask
@@ -216,6 +224,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     print(f"settings file: {settings}  ({'present' if settings.exists() else 'absent: defaults only'})")
     print(f"FileVault: {filevault_status()}")
     print_stores()
+    print_capture(config, full=False)
     try:
         route = resolve_route(config)
     except ModelError as err:
@@ -569,6 +578,294 @@ def cmd_report(args: argparse.Namespace) -> int:
     return 0
 
 
+# --- capture -----------------------------------------------------------------------------------
+
+
+def _when(epoch: float | None) -> str:
+    if epoch is None:
+        return "never"
+    return datetime.fromtimestamp(epoch).astimezone().isoformat(timespec="seconds")
+
+
+def spool_report(root: Path) -> dict:
+    """The spool's size and what has not been ingested yet. It only reads (no text is shown) and creates nothing."""
+    files = spool.spool_files(root)
+    out: dict = {"files": 0, "bytes": 0, "pending": 0, "corrupt": 0, "oldest": None}
+    for path in files:
+        try:
+            out["bytes"] += path.stat().st_size
+            records, _, corrupt = spool.read_file(path)
+        except OSError:
+            continue
+        out["files"] += 1
+        out["pending"] += len(records)
+        out["corrupt"] += corrupt
+        for rec in records:
+            if out["oldest"] is None or rec.recorded_at < out["oldest"]:
+                out["oldest"] = rec.recorded_at
+    return out
+
+
+def history_report(root: Path) -> dict | None:
+    """Sources and messages in history.db, by app. Read-only; None when there is no history.db or it cannot be read."""
+    path = core_db.store_path("history", root)
+    if not path.exists():
+        return None
+    try:
+        conn = sqlite3.connect(f"file:{quote(path.resolve().as_posix())}?mode=ro", uri=True)
+        try:
+            rows = conn.execute(
+                "SELECT s.app, COUNT(DISTINCT s.id), COUNT(m.id) FROM source s LEFT JOIN message m ON m.source_id = s.id GROUP BY s.app"
+            ).fetchall()
+            newest = conn.execute("SELECT MAX(occurred_at) FROM message").fetchone()[0]
+        finally:
+            conn.close()
+    except sqlite3.Error:
+        return None
+    return {"apps": {app or "unknown": (sources, messages) for app, sources, messages in rows}, "newest": newest}
+
+
+def last_log_error(root: Path) -> str | None:
+    """The newest error line of the capture log, as written (it holds no turn text), or None."""
+    path = spool.log_path(root)
+    try:
+        with path.open("rb") as fh:
+            fh.seek(0, os.SEEK_END)
+            fh.seek(max(fh.tell() - 65536, 0))
+            lines = fh.read().decode("utf-8", "replace").splitlines()
+    except OSError:
+        return None
+    for line in reversed(lines):
+        parts = line.split(" ", 2)
+        if len(parts) == 3 and parts[1] == "error":
+            return line[:300]
+    return None
+
+
+def last_ingest_time(root: Path) -> float | None:
+    """When the ingester last finished a drain: it saves its state file at the end of each one."""
+    try:
+        return spool.state_path(root).stat().st_mtime
+    except OSError:
+        return None
+
+
+def install_report(root: Path) -> list[dict]:
+    """Each recorded install, with the capture events its hooks cover and whether the interpreter they name is there."""
+    out = []
+    for item in capture_install.recorded_installs(root):
+        target = Path(item["path"])
+        hooks_file = target / "hooks" / "hooks.json" if item["kind"] == "plugin" else target
+        interpreters = capture_install.hook_interpreters(hooks_file)
+        out.append(
+            {
+                **item,
+                "events": capture_install.installed_events(hooks_file),
+                "missing_python": [p for p in interpreters if not Path(p).exists()],
+            }
+        )
+    return out
+
+
+def print_capture(config: dict, *, full: bool) -> None:
+    """The capture section of `doctor` (full=False) and of `capture status` (full=True). Local reads only: no model, no
+    chat text, and nothing is created."""
+    root = data_root()
+    print("capture (Claude Code):")
+    folders = scope.personal_paths(config)
+    if folders:
+        print(f"  personal folders ({len(folders)}): " + ", ".join(str(p) + ("" if p.exists() else " (missing)") for p in folders))
+    else:
+        print(f"  personal folders: none set, so nothing is captured; list them as [capture] personal_paths in {northstar_config.settings_path()}")
+    installs = install_report(root)
+    if not installs:
+        print("  hooks: not installed (`northstar capture install --settings PATH` or `--plugin-dir PATH`)")
+    for item in installs:
+        events = item["events"]
+        if events is None:
+            state = "the file cannot be read"
+        elif not events:
+            state = "no Northstar hooks in it any more"
+        elif len(events) < len(capture_install.EVENTS):
+            state = f"only {len(events)} of {len(capture_install.EVENTS)} events: {', '.join(events)}"
+        else:
+            state = f"all {len(events)} events"
+        if item["missing_python"]:
+            state += f"; the interpreter {item['missing_python'][0]} is gone: install again"
+        print(f"  hooks: {item['kind']} {item['path']}: {state} (installed {item['at']})")
+    stamped, why = spool.encryption_stamp(root)
+    if stamped:
+        print(f"  encryption stamp: valid ({why})")
+    else:
+        print(f"  encryption stamp: NOT valid, so the hooks write nothing: {why}")
+    spooled = spool_report(root)
+    waiting = f"{spooled['pending']} records waiting" + (f", the oldest from {spooled['oldest']}" if spooled["oldest"] else "")
+    if spooled["corrupt"]:
+        waiting += f", {spooled['corrupt']} unreadable lines"
+    print(f"  spool: {waiting}" + (f" ({spooled['files']} files, {_bytes(spooled['bytes'])})" if full else ""))
+    running = spool.lock_held(spool.lock_path(root))
+    print(f"  ingester: {'running now' if running else 'not running'}; last ingest {_when(last_ingest_time(root))}")
+    if full:
+        history = history_report(root)
+        if history is None:
+            print("  history.db: no history yet")
+        else:
+            apps = history["apps"]
+            total_sources = sum(s for s, _ in apps.values())
+            total_messages = sum(m for _, m in apps.values())
+            print(f"  history.db: {total_sources} sources, {total_messages} messages" + (f", newest {history['newest']}" if history["newest"] else ""))
+            for app, (sources, messages) in sorted(apps.items()):
+                print(f"    {app}: {sources} sources, {messages} messages")
+    error = last_log_error(root)
+    print(f"  capture log, last error: {error or 'none'}")
+
+
+def cmd_capture_status(args: argparse.Namespace) -> int:
+    print_capture(northstar_config.load(), full=True)
+    return 0
+
+
+def _print_plan(plan, dry_run: bool) -> None:
+    if dry_run:
+        print("dry run: nothing is written")
+    for line in plan.lines():
+        print(line)
+
+
+def cmd_capture_install(args: argparse.Namespace) -> int:
+    config = northstar_config.load()
+    kind = "settings" if args.settings else "plugin"
+    try:
+        capture_install.refuse_duplicate(kind, data_root())  # a second way would record every turn twice
+    except capture_install.InstallError as err:
+        raise CliError(str(err)) from err
+    python = capture_install.project_python()
+    ok, detail = capture_install.check_command(python)
+    print(f"check: {detail}" if ok else f"check FAILED: {detail}")
+    if not ok and not args.dry_run:
+        raise CliError("the hook command does not start, so nothing was installed; run `uv sync` in the repository, then try again")
+    try:
+        print(f"encryption at rest: {capture_install.check_encryption(data_root())}")  # PL-3: before anything is installed
+        if args.settings:
+            plan = capture_install.install_settings(args.settings, python, dry_run=args.dry_run)
+        else:
+            plan = capture_install.render_plugin(args.plugin_dir, python, dry_run=args.dry_run)
+    except capture_install.InstallError as err:
+        raise CliError(str(err)) from err
+    _print_plan(plan, args.dry_run)
+    target = args.settings or args.plugin_dir
+    if kind == "settings":
+        print("no other key in the settings file changes")
+    if not args.dry_run:
+        if kind == "settings":
+            print("installed: new Claude Code sessions run the hooks" if plan.changed else "already installed: nothing changed")
+        else:
+            print("plugin folder written")
+        stamp = spool.write_encryption_stamp(data_root())  # the hook writes nothing without it
+        print(f"encryption stamp written: {stamp}")
+        capture_install.record_install(kind, target, data_root())
+    if kind == "plugin":
+        for line in capture_install.plugin_commands(target):
+            print(line)
+    if not scope.personal_paths(config):
+        print(f"note: no personal folders are set, so nothing is captured yet; list them as [capture] personal_paths in {northstar_config.settings_path()}")
+    return 0
+
+
+def cmd_capture_uninstall(args: argparse.Namespace) -> int:
+    try:
+        plan = capture_install.uninstall_settings(args.settings, dry_run=args.dry_run)
+    except capture_install.InstallError as err:
+        raise CliError(str(err)) from err
+    _print_plan(plan, args.dry_run)
+    if not args.dry_run:
+        capture_install.forget_install("settings", args.settings, data_root())
+        print(f"removed {sum(1 for c in plan.changes if c.action == 'remove')} Northstar hooks; nothing else in the file changed")
+        waiting = spool_report(data_root())["pending"]
+        if waiting:
+            print(f"{waiting} spool records are still waiting: `northstar capture ingest` writes them")
+        print("what was captured stays in history.db until you excise it")
+    return 0
+
+
+def cmd_capture_ingest(args: argparse.Namespace) -> int:
+    if scope.hidden_run():
+        print("this is one of Northstar's own runs: nothing is ingested")
+        return 0
+    try:
+        result = capture_ingest.run()
+    except core_db.EncryptionRequired as err:
+        raise CliError(str(err)) from err
+    if result is None:
+        print("another ingester is running now; nothing done")
+        return 0
+    print(
+        f"ingested {result.records} records: {result.messages} messages, {result.sources} new sources; "
+        f"{result.duplicates} already stored, {result.skipped} make no message, {result.out_of_scope} out of scope, "
+        f"{result.corrupt} unreadable, {result.errors} refused"
+    )
+    if result.reconciled or result.mismatches:
+        print(f"reconciled with transcripts: {result.reconciled} messages added, {result.mismatches} turns differ (kept as captured)")
+    return 0
+
+
+class _DryRunStore:
+    """The history store for a backfill that must write nothing: everything runs inside one transaction that is rolled
+    back at the end, so counts such as "already stored" are the real ones. `batch()` is a no-op because the store
+    then uses savepoints inside the open transaction."""
+
+    def __init__(self, store: SQLiteHistoryStore) -> None:
+        self._store = store
+
+    def __getattr__(self, name: str):
+        return getattr(self._store, name)
+
+    @contextmanager
+    def batch(self):
+        yield
+
+
+def backfill_dry_run(folder: Path, config: dict, progress):
+    """Count what `backfill` would do. With a history.db, its rows are read inside a transaction that is rolled back;
+    without one, a scratch store in a folder under the data root is used and removed (no row is ever committed)."""
+    with ExitStack() as stack:
+        if core_db.store_path("history", data_root()).exists():
+            store = stack.enter_context(SQLiteHistoryStore())
+        else:
+            scratch = spool.capture_dir(data_root())
+            scratch.mkdir(parents=True, mode=0o700, exist_ok=True)
+            tmp = stack.enter_context(tempfile.TemporaryDirectory(prefix="dry-run-", dir=scratch))
+            store = stack.enter_context(SQLiteHistoryStore(Path(tmp)))
+        store.conn.execute("BEGIN IMMEDIATE")
+        try:
+            return capture_backfill.backfill(folder, _DryRunStore(store), config=config, progress=progress)
+        finally:
+            if store.conn.in_transaction:
+                store.conn.execute("ROLLBACK")
+
+
+def cmd_capture_backfill(args: argparse.Namespace) -> int:
+    folder = Path(args.source).expanduser()
+    if not folder.is_dir():
+        raise CliError(f"{folder} is not a folder")
+    resolved = folder.resolve()
+    if resolved == Path.home().resolve() or resolved == Path(resolved.anchor):
+        raise CliError(f"{folder} is a whole home folder or disk, not a folder of transcripts: name the folder that holds them")
+    config = northstar_config.load()
+    if not scope.personal_paths(config):
+        raise CliError(f"no personal folders are set, so nothing would be captured; list them as [capture] personal_paths in {northstar_config.settings_path()}")
+    try:
+        if args.dry_run:
+            print("dry run: counting only; nothing is written")
+            backfill_dry_run(folder, config, lambda line: print(line.replace(" written", " would be written")))
+        else:
+            with SQLiteHistoryStore() as store:
+                capture_backfill.backfill(folder, store, config=config, progress=print)
+    except core_db.EncryptionRequired as err:
+        raise CliError(str(err)) from err
+    return 0
+
+
 # --- parser ------------------------------------------------------------------------------------
 
 
@@ -582,6 +879,24 @@ def build_parser() -> argparse.ArgumentParser:
     check = models.add_parser("check", help="list the models your keys can reach (changes nothing)")
     check.add_argument("--family", choices=list(FAMILIES))
     check.set_defaults(func=cmd_models_check)
+
+    cap = top.add_parser("capture", help="capture for Claude Code: status, hooks install and removal, backfill, ingest").add_subparsers(dest="capture_command", required=True)
+    cap.add_parser("status", help="personal folders, hooks, the spool, the ingester, what history.db holds and the capture log's last error (reads only)").set_defaults(func=cmd_capture_status)
+    ci = cap.add_parser("install", help="put the capture hooks into a settings file or a plugin folder you name (never a default path)")
+    where = ci.add_mutually_exclusive_group(required=True)
+    where.add_argument("--settings", metavar="PATH", help="merge the hooks into this settings.json (a timestamped backup is kept beside it)")
+    where.add_argument("--plugin-dir", metavar="PATH", help="write a local Claude Code plugin folder here, and print the commands that add it")
+    ci.add_argument("--dry-run", action="store_true", help="print exactly what would change, and change nothing")
+    ci.set_defaults(func=cmd_capture_install)
+    cu = cap.add_parser("uninstall", help="remove only Northstar's hooks from a settings file")
+    cu.add_argument("--settings", metavar="PATH", required=True)
+    cu.add_argument("--dry-run", action="store_true", help="print what would be removed, and change nothing")
+    cu.set_defaults(func=cmd_capture_uninstall)
+    cb = cap.add_parser("backfill", help="import past Claude Code transcripts (sessions inside your personal folders only)")
+    cb.add_argument("--from", dest="source", metavar="FOLDER", required=True, help="a folder laid out like ~/.claude/projects")
+    cb.add_argument("--dry-run", action="store_true", help="count sessions in and out of scope and messages; write nothing")
+    cb.set_defaults(func=cmd_capture_backfill)
+    cap.add_parser("ingest", help="drain the capture spool into history.db now").set_defaults(func=cmd_capture_ingest)
 
     ev = top.add_parser("eval", help="the measurement harness").add_subparsers(dest="eval_command", required=True)
 

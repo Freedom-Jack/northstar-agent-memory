@@ -1,0 +1,123 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/../.venv/bin/python",
+            "args": [
+              "-P",
+              "-m",
+              "northstar_agent_memory.capture.hook",
+              "SessionStart"
+            ],
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/../.venv/bin/python",
+            "args": [
+              "-P",
+              "-m",
+              "northstar_agent_memory.capture.hook",
+              "UserPromptSubmit"
+            ],
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/../.venv/bin/python",
+            "args": [
+              "-P",
+              "-m",
+              "northstar_agent_memory.capture.hook",
+              "Stop"
+            ],
+            "timeout": 8
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/../.venv/bin/python",
+            "args": [
+              "-P",
+              "-m",
+              "northstar_agent_memory.capture.hook",
+              "SubagentStop"
+            ],
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/../.venv/bin/python",
+            "args": [
+              "-P",
+              "-m",
+              "northstar_agent_memory.capture.hook",
+              "PreCompact"
+            ],
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/../.venv/bin/python",
+            "args": [
+              "-P",
+              "-m",
+              "northstar_agent_memory.capture.hook",
+              "PostCompact"
+            ],
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/../.venv/bin/python",
+            "args": [
+              "-P",
+              "-m",
+              "northstar_agent_memory.capture.hook",
+              "SessionEnd"
+            ],
+            "timeout": 2
+          }
+        ]
+      }
+    ]
+  }
+}

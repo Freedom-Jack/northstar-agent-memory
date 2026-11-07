@@ -38,6 +38,8 @@ from northstar_agent_memory.models.port import (
 from northstar_agent_memory.paths import harness_cwd
 
 DEFAULT_TIMEOUT_S = 600.0
+# Every program the harness starts carries this marker, so the hooks it would run and the ingester skip it (I24).
+HIDDEN_RUN_ENV = "NORTHSTAR_HIDDEN_RUN"
 
 
 class HarnessNotFound(ModelUnavailable):
@@ -118,10 +120,12 @@ def call_timeout(config: dict) -> float | None:
 
 def child_env(drop: Iterable[str], extra: Mapping[str, str] | None = None) -> dict[str, str]:
     """The environment for a run: a copy without `drop` (the variables that would put it on an API key or
-    another provider instead of the plan login), plus `extra`."""
+    another provider instead of the plan login), plus `extra`, plus NORTHSTAR_HIDDEN_RUN=1: Northstar's own runs
+    are never captured as the user's sessions (I24)."""
     dropped = set(drop)
     env = {name: value for name, value in os.environ.items() if name not in dropped}
     env.update(extra or {})
+    env[HIDDEN_RUN_ENV] = "1"
     return env
 
 

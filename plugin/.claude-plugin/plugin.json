@@ -1,0 +1,5 @@
+{
+  "name": "northstar",
+  "version": "0.1.0",
+  "description": "Northstar capture: writes what is said in your Claude Code sessions, both sides and word for word, into your own chat history on this machine. Only sessions inside the personal folders you named. No model is called."
+}
